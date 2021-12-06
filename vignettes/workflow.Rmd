@@ -9,7 +9,7 @@ vignette: >
 
 # Introduction
 
-This is a description of the workflow for *cytofQC*, which applies QC labels to each observation in a CyTOF dataset. 
+This is a description of the workflow for *cytofQC*, which applies QC labels to each observation in a CyTOF dataset. The vignette shows how to use the general function \code{labelQC} to obtain labels and probabilities for all of the observations in a CyTOF data set. We then demonstrate the inner workings of the function to illustrate how it works for each observation type and show how to use the individual modeling functions that make up \code{labelQC}. we then end with a demonstration of how the labeled data cluster using UMAP. 
 
 
 ```{r, include = FALSE}
@@ -26,7 +26,7 @@ library(cytofQC)
 library(ggplot2)
 ```
 
-# Read in data and create initial datasets
+# Read in data and create initial dataset
 
 The function \code{dataPrep} read in the data and formats a \code{data.frame} that contains all of the QC variables. The variables are renamed so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the \code{log1p} function. The output is a \code{matrix}. 
 
@@ -36,7 +36,20 @@ tech <- dataPrep(f)
 head(tech)
 ```
 
-The function \code{qcDataFrame} creates a \code{data.frame} that contains the labels and information about the labels. It is built using the \code{tech} dataset. The first variable is the label and each observation is assigned a label of either *cell* or *GDPzero*. The *GDPzero* label is assigned to any variable that has a 0 for any of the GDP variables. The \code{data.frame} has variables for beads, doublets, debris, and viability. The values for those variables are initially set to *NA*. The purpose of this dataset is to iteratively change the label for the observations and assign probabilities to each observation in regard its status as a bead, doublet, debris, or live/dead cell. 
+# Use labelQC to obtain labels for each obsevation
+
+The integral function of cytofQC is \code{labelQC}. A \code{data.frame} obtained from \code{dataPrep} can be passed to \code{labelQC} with no other arguments and it will return a \code{data.frame} that contains all of the labels and the probability that each observation belongs to each of the specified labels. The data we are using for this vignette has only live cells so we call \code{labelQC} in a way that omits the labeling of the live/dead cells. The following call will label the cells using a support vector machine and mutual nearest neighbors. 
+
+```{r}
+labels <- labelQC(tech, types = c("bead", "doublet", "debris"))
+head(labels)
+table(labels$label)
+```
+
+
+# How does labelQC work?
+
+The following workflow demonstrates what is happening in the \code{labelQC} function. The user can use any of these functions to customize a labeling algorithm. We start with creating the basic labeling \code{data.frame}. The function \code{qcDataFrame} creates a \code{data.frame} that contains the labels and information about the labels. It is built using the \code{tech} dataset. The first variable is the label and each observation is assigned a label of either *cell* or *GDPzero*. The *GDPzero* label is assigned to any variable that has a 0 for any of the GDP variables. The \code{data.frame} has variables for beads, doublets, debris, and viability. The values for those variables are initially set to *NA*. The purpose of this dataset is to iteratively change the label for the observations and assign probabilities to each observation in regard its status as a bead, doublet, debris, or live/dead cell. 
 
 ```{r}
 labels <- qcDataFrame(tech)
