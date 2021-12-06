@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(cleanQC)
+library(cytofQC)
 library(ggplot2)
 ```
 
@@ -31,8 +31,8 @@ library(ggplot2)
 The function \code{dataPrep} read in the data and formats a \code{data.frame} that contains all of the QC variables. The variables are renamed so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the \code{log1p} function. The output is a \code{matrix}. 
 
 ```{r}
-fname <- "../../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-tech <- dataPrep(fname)
+f <- "../../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
+tech <- dataPrep(f)
 head(tech)
 ```
 
@@ -77,7 +77,7 @@ head(beads)
 sum(beads$init)
 ```
 
-The function \code{cytofHist} can be used to visualize the data with regard to a grouping variable. This allows us to see what is classified as beads in the original bead data. 
+The function \code{cytofHist} can be used to visualize the data with regard to a grouping variable. This allows us to see what is classified as beads in the original bead data. TRUE indicates observations that are initially characterized as beads. 
 
 ```{r}
 beadPlots <- NULL
@@ -90,7 +90,7 @@ for (i in 1:4) {
 ```{r}
 ggpubr::ggarrange(plotlist = beadPlots, ncol = 2, nrow = 2)
 ```
-The zeros make it difficult to see the trends, so here are the plots without the zeros. The density option was also used to emphasize the smaller group. 
+The zeros make it difficult to see the trends, so here are the plots without the zeros. The density option can be used to emphasize the smaller group. 
 
 ```{r}
 beadPlots2 <- NULL
@@ -107,30 +107,31 @@ for (i in 1:4) {
 ggpubr::ggarrange(plotlist = beadPlots2, ncol = 2, nrow = 2)
 ```
 
-## Find mismatches
+## Identify Matches
 
-This next part identifies the observations that are mismatched from its neighbors in regard to bead assignment using the nearest neighbors matrix. If an observation is a designated as a bead, its nearest neighbors that are also beads are assigned a value of FALSE. If a neighbor is not a bead, it is given a value of TRUe, indicating that it is a mismatch of the observation. The rows are then summed together and rows with one or more TRUE values are designated as mismatches. The function returns nearest neighbors matrix with values of TRUE/FALSE as values indicating the mismatch status and a variable called *Mismatch* that is TRUE if the observation is a mismatch and FALSE if it is not. 
+This next part identifies the observations that are matched with all of its neighbors in regard to bead assignment using the nearest neighbors or mutual nearest neighbors matrix. If an observation is a designated as a bead, its nearest neighbors that are also beads are assigned a value of FALSE. If a neighbor is not a bead, it is given a value of TRUE, indicating that it is a mismatch of the observation. The rows are then summed together and rows with no TRUE values are designated as matches. The function returns a matrix with values of TRUE/FALSE as values indicating the mismatch status and a variable called *match* that is TRUE if the observation is a mismatch and FALSE if it is a match. 
 
-This is a piece that we are not very happy with at this time. It selects only points that are hard to classify, which means that we are building a labeling model only with points that we are not very certain about. We plan to change this soon. 
+The user can change how strict the threshold for being a match is by adjusting the *threshold* argument. The default is that all of the neighbors must be a match for the observation to be given a value of TRUE for the *match* variable.  
+
 
 ```{r}
-mm <- mismatch(mnn, beads$init, threshold = 1)
-head(mm)
-sum(mm$Mismatch)
+sure <- surematch(mnn, beads$init, threshold = 0)
+head(sure)
+sum(sure$Mismatch)
 ```
 
-## Create a subset of data to make a model with
+## Create a subset of data to train a model
 
-We plan to create a model using a smaller set of data. This next piece selects a subset of data points to build the model with. Only the points selected by the previous piece (currently the mismatches) are considered to be in this subset. If no points are designated as mismatches, as is the case with the beads, the entire set of unclassified data points (those that still have a *cell* label) is sampled. The data are sampled at random, but weighted to ensure we have a fairly balanced dataset to build the labeling model with. The function \code{modelData|} returns a set of indices that identifies the points in the dataset that will be used to compute the labeling model. 
+We plan to create a model using a smaller set of data. This next piece selects a subset of data points to build the model. Only the matches selected by the previous piece are considered to be in this subset. If no points are designated as sure matches, the entire set of unclassified data points (those that still have a *cell* label) is sampled. The data are sampled at random, but weighted to ensure we have a fairly balanced dataset to build the labeling model with. The function \code{modelData|} returns a set of indices that identifies the points in the dataset that will be used to compute the labeling model. 
 
 ```{r}
-ind <- modelData(labels, subset = mm$Mismatch, init = beads$init, n = 4000)
+ind <- modelData(labels, subset = sure$match, init = beads$init, n = 4000)
 length(ind)
 head(ind)
 
 ```
 
-The following histogram shows where the selected points are relative to the rest of the points for each of the bead channels. 
+The following histogram shows where the selected points are relative to the rest of the points for each of the bead channels. Note that TRUE designates the points that were selected to train the model. 
 
 ```{r}
 index <- rep(FALSE, nrow(tech))
@@ -150,7 +151,7 @@ ggpubr::ggarrange(plotlist = beadPlots3, ncol = 2, nrow = 2)
 
 ## Final classification of beads
 
-There are currently three models that can be used to classify the beads: support vector machines, random forests, and gradient boosting machines. The method below uses random forests, but the process is identical for SVMs and GBMs. The function for svm and gbm are \code{svmLabel} and \code{gbmLabel}. The labeling functions take the same input and produce identical ouput. The output is a \code{data.frame} that is identical to the \code{qcDataFrame} but with the beads labeled as beads and the predicted probability of being a bead assigned to each observation in the *bead* variable. This is the *labels* \code{data.frame} that should be used for the next step because the *bead* label is needed for all other QC labels. 
+There are currently three models that can be used to classify the beads: support vector machines (SVMs), random forests, and gradient boosting machines (GBMs). The method below uses random forests, but the process is identical for SVMs and GBMs. The functions for SVMs and GBMs are \code{svmLabel} and \code{gbmLabel}. The labeling functions take the same input and produce identical output. The output is a \code{data.frame} that is identical to the \code{qcDataFrame} but with the beads labeled as beads and the predicted probability of being a bead assigned to each observation in the *bead* variable. This is the *labels* \code{data.frame} that should be used for the next step because the *bead* label is needed for all other QC labels. 
 
 ```{r}
 rf.labs <- rfLabel(tech, labels, type = "bead", init = beads$init, index = ind)
@@ -159,7 +160,7 @@ table(rf.labs$label)
 
 ```
 
-These are the plots with the zeros removed
+The following plots show a histogram of the bead measurement with the groups for each cell type shown in the plot. Note that the observations with a bead measurement of zero have been omitted from the plot because they dominate the histogram and make it difficult to see the three groups. 
 
 ```{r}
 beadPlots <- NULL
@@ -180,12 +181,12 @@ ggpubr::ggarrange(plotlist = beadPlots, ncol = 2, nrow = 2)
 
 # Doublets
 
-This bit labels the doublets. It has the exact same structure as the beads. Note that the updated label \code{data.frame} should be used because the bead labels are needed for each of the steps. 
+This section shows how to label the doublets. It has the exact same structure as the beads. Note that the updated label \code{data.frame} should be used because the bead labels are needed for each of the steps. 
 
 
 ## Initial doublet labeling
 
-The doublets are difficult to classify and we compute a doubletScore to classify them. There are currently three options for classifying the doublet. They are selected using the score argument and they are documented in the help file for \code{initialDoublet}. The function returns the doublet score, the group it was assigned to, and the initial doublet classification in the *init* variable.   
+The doublets are difficult to classify and we compute a doublet score to classify them. The method used to compute the doublet score is defined in the help file for the \code{initialDoublet} function. There are currently three options for classifying the doublet. They are selected using the score argument and they are documented in the help file for \code{initialDoublet}. The function returns the doublet score, the group it was assigned to, and the initial doublet classification in the *init* variable.   
 
 ```{r}
 doublets <- initialDoublet(tech, rf.labs, score = 1)
@@ -193,7 +194,8 @@ head(doublets)
 
 ```
 
-This shows a classification of the doublet scores for the unclassified points (all of those still labeled *cell*). The scores for the classified points can be seen on the histogram by selection \code{na.rm = FALSE}. 
+This histogram shows the initical classification of the doublet scores for the unclassified points (all of those not labeled *GDPzero* or *bead*). The scores for the classified points can be seen on the histogram by selection \code{na.rm = FALSE}. 
+
 ```{r}
 cytofHist(doublets$doubletScore, doublets$doubletGroup, na.rm = TRUE, 
           title = "Doublet score and initial classification")
@@ -201,24 +203,24 @@ cytofHist(doublets$doubletScore, doublets$doubletGroup, na.rm = TRUE,
 
 
 
-## Find mismatches
+## Find matches
 
-This next part identifies the observations that are mismatched from its neighbors in regard to doublet assignment using the nearest neighbors matrix. 
+As with the beads, the next step is to identify the observations that are similar to each other in regard to the doublet score. The process is identical to the one used to assign the beads.  
 
 ```{r}
-dm <- mismatch(mnn, doublets$init, threshold = 1)
-head(dm)
-sum(dm$Mismatch)
+sureDoublet <- surematch(mnn, doublets$init, threshold = 0)
+head(sureDoublet)
+sum(sureDoublet$match)
 ```
 
-This lets us see that the mismatched doublets are on the boundary. There are so few of them rela
+The hisograms below show where the matched points are in relation to the rest of the points. This lets us see that the matched doublets are not too near the boundary. 
 
 ```{r}
 mmPlots <- NULL
-mmPlots[[1]] <- cytofHist(doublets$doubletScore, dm$Mismatch, type = "count", 
-          title = "Mismatched doublets")
-mmPlots[[2]] <- cytofHist(doublets$doubletScore, dm$Mismatch, type = "density", 
-          title = "Mismatched doublets")
+mmPlots[[1]] <- cytofHist(doublets$doubletScore, sureDoublet$match, type = "count", 
+          title = "Matched doublets")
+mmPlots[[2]] <- cytofHist(doublets$doubletScore, sureDoublet$match, type = "density", 
+          title = "Matched doublets")
 
 ```
 ```{r fig.height = 3}
@@ -226,12 +228,12 @@ ggpubr::ggarrange(plotlist = mmPlots, ncol = 2, nrow = 1)
 ```
 
 
-## Create a subset of data to make a model with
+## Create a subset of data to train a doublet model
 
-The doublets have enough mismatches to draw from to select a dataset from the mismatches.  
+This code chunk shows how to select a random set of doublets and non-doublets to use to train a model.  
 
 ```{r}
-d.rf.index <- modelData(rf.labs, subset = dm$Mismatch, init = doublets$init, n = 4000)
+d.rf.index <- modelData(rf.labs, subset = sureDoublet$match, init = doublets$init, n = 4000)
 
 ```
 
@@ -247,7 +249,7 @@ cytofHist(x = doublets$doubletScore, group = index, type = "count",
 
 ## Final classification of doublets
 
-This shows the classification with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
+This shows the classification of doublets with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
 
 ```{r}
 rf.labs <- rfLabel(tech, rf.labs, type = "doublet", init = doublets$init, index = d.rf.index)
@@ -256,7 +258,7 @@ table(rf.labs$label)
 
 ```
 
-These are the plots with the zeros removed
+The following histogram shows doublet scores for the different groups that have been classified up to this point.
 
 ```{r}
 cytofHist(doublets$doubletScore, rf.labs$label, type = "count", 
@@ -265,19 +267,19 @@ cytofHist(doublets$doubletScore, rf.labs$label, type = "count",
 
 # Debris
 
-This bit labels the debris. It has the exact same structure as the beads. Note that the updated label \code{data.frame} should be used because the previous labels are needed for this step. 
+This section shows how to label the debris. It has the exact same structure as the beads and doublets. Note that the updated label \code{data.frame} should be used because the previous labels are needed for this step. 
 
 
 ## Initial debris labeling
 
-The debris are difficult to classify and we compute a debrisScore to classify them. There are currently three options for classifying debris. They are selected using the score argument and they are documented in the help file for \code{initialDoebris}. The function returns the debris score, the group it was assigned to, and the initial debris classification in the *init* variable.   
+We compute a debris score to do a prelimnary classification of debris and non-debris. There are currently three options for classifying debris. They are selected using the score argument and they are documented in the help file for \code{initialDebris}. The function returns the debris score, the group it was assigned to, and the initial debris classification in the *init* variable.   
 
 ```{r}
 debris <- initialDebris(tech, rf.labs, score = 1)
 head(debris)
 
 ```
-This shows a classification of the debris scores for the unclassified points (all of those still labeled *cell*). The scores for the classified points can be seen on the histogram by selection \code{na.rm = FALSE}. 
+This histogram shows a classification of the debris scores for the unclassified points (all of those not labeled as *bead*, *doublet*, or *GDPzero*). The scores for the classified points can be seen on the histogram by selecting \code{na.rm = FALSE}. A label of 1 indicates a low debris score, or less likely to be debris, and a label of 2 indicates it is likely debris. 
 
 ```{r}
 cytofHist(debris$debrisScore, debris$debrisGroup, na.rm = TRUE, 
@@ -289,18 +291,18 @@ cytofHist(debris$debrisScore, debris$debrisGroup, na.rm = TRUE,
 This next part identifies the observations that are mismatched from its neighbors in regard to debris assignment using the nearest neighbors matrix. 
 
 ```{r}
-debm <- mismatch(mnn, debris$init, threshold = 1)
+debm <- surematch(mnn, debris$init, threshold = 0)
 head(debm)
 sum(debm$Mismatch)
 ```
 
-This lets us see that the mismatched doublets are on the boundary. There are so few of them rela
+The following histogram shows the debris scores for the observations that are candidates for model training. Note that the matched observations are away from the boundary between the two groups. 
 
 ```{r}
 mmPlots <- NULL
-mmPlots[[1]] <- cytofHist(debris$debrisScore, debm$Mismatch, type = "count", 
+mmPlots[[1]] <- cytofHist(debris$debrisScore, debm$match, type = "count", 
           title = "Mismatched debris")
-mmPlots[[2]] <- cytofHist(debris$debrisScore, debm$Mismatch, type = "density", 
+mmPlots[[2]] <- cytofHist(debris$debrisScore, debm$match, type = "density", 
           title = "Mismatched debris")
 
 ```
@@ -308,28 +310,28 @@ mmPlots[[2]] <- cytofHist(debris$debrisScore, debm$Mismatch, type = "density",
 ggpubr::ggarrange(plotlist = mmPlots, ncol = 2, nrow = 1)
 ```
 
-## Create a subset of data to make a model with
+## Create a subset of data to train a debris model
 
-The debris have enough mismatches to draw from to select a dataset from the mismatches.  
+The debris have enough matches to draw from to select a dataset from the matches. The following code chunk selects a training dataset for the model. 
 
 ```{r}
-de.rf.index <- modelData(rf.labs, subset = debm$Mismatch, init = debris$init, n = 4000)
+de.rf.index <- modelData(rf.labs, subset = debm$match, init = debris$init, n = 4000)
 
 ```
 
-The following histogram shows where the selected points are relative to the rest of the debris scores. 
+The following histogram shows where the selected points are relative to the rest of the debris scores. Note that the 'density' option is used so that the groups can be seen. When the 'count' option is used it is almost impossible to see the selected points on the histogram. 
 
 ```{r}
 index <- rep("All", nrow(tech))
 index[de.rf.index] <- "Subset"
-cytofHist(x = debris$debrisScore, group = index, type = "count", 
+cytofHist(x = debris$debrisScore, group = index, type = "density", 
           title = "Debris subset")
 
 ```
 
 ## Final classification of debris
 
-This shows the classification with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
+The following code show how to do the final classification of debris with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
 
 ```{r}
 rf.labs <- rfLabel(tech, rf.labs, type = "debris", init = debris$init, index = de.rf.index)
@@ -338,7 +340,7 @@ table(rf.labs$label)
 
 ```
 
-These are the plots of the current labels on the debris score
+This histogram shows the debris score for the observations that have been labeled up to this point. You can see that the observations that are labeled *debris* and *GDPzero*.  
 
 ```{r}
 cytofHist(debris$debrisScore, rf.labs$label, type = "count", 
@@ -347,13 +349,15 @@ cytofHist(debris$debrisScore, rf.labs$label, type = "count",
 
 # Final summary
 
-The following shows the final labels on the different metrics used to classify. 
+The following shows the final labels on the different metrics used to classify the observations. 
 
 ```{r}
-cytofHist(tech[, "Bead4"], rf.labs$label, title = "Final labels on Bead 4 measures")
-tmp <- data.frame(bead = tech[, "Bead4"], group = rf.labs$label)
+cytofHist(rowSums(tech[, c("Bead1", "Bead2", "Bead3", "Bead4")]), rf.labs$label, 
+          title = "Final labels on Bead 4 measures")
+tmp <- data.frame(bead = rowSums(tech[, c("Bead1", "Bead2", "Bead3", "Bead4")]), 
+                  group = rf.labs$label)
 tmp <- tmp[tmp$bead > 0, ]
-cytofHist(tmp$bead, tmp$group, title = "Final labels on Bead 4 measures - zeros removed")
+cytofHist(tmp$bead, tmp$group, title = "Final labels on Bead measure - zeros removed")
 cytofHist(doublets$doubletScore, rf.labs$label, title = "Final labels on doublet score")
 cytofHist(debris$debrisScore, rf.labs$label, title = "Final labels on debris score")
 ```
@@ -402,7 +406,7 @@ for (i in 1:5) {
   tmp <- data.frame(umapData[, 1:2], lab = umapData[, cell_type[i]])
   umaps[[i]] <- ggplot(tmp, aes(x = x, y = y, color = lab)) +
     geom_point(size = 0.25, show.legend = FALSE) +
-    scale_color_manual("", values = c(cols[i], "gray70")) +
+    scale_color_manual("", values = c(cols[i], "gray80")) +
     labs(title = cell_type[i], x = "", y = "") +
     theme_bw()
 }
