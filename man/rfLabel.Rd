@@ -85,8 +85,8 @@ x <- dataPrep(fname)
 nn <- NN(x)
 labels <- qcDataFrame(x)
 beads <- initialBead(x, labels = labels)
-mm <- mismatch(nn, init = beads$init, threshold = 1)
-index <- modelData(labels, subset = mm$Mismatch, init = beads$init, n = 4000)
+sure <- mismatch(nn, init = beads$init, threshold = 0)
+index <- modelData(labels, subset = sure$Mismatch, init = beads$init, n = 4000)
 rfBeads <- rfLabel(x, labels, type = 'bead', init = beads$init, index = index)
 
 fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"

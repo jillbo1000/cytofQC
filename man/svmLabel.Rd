@@ -60,8 +60,8 @@ x <- dataPrep(fname)
 nn <- NN(x)
 labels <- qcDataFrame(x)
 beads <- initialBead(x, labels = labels)
-mm <- mismatch(nn, init = beads$init, threshold = 1)
-index <- modelData(labels, subset = mm$Mismatch, init = beads$init, n = 4000)
+mm <- surematch(nn, init = beads$init, threshold = 1)
+index <- modelData(labels, subset = mm$match, init = beads$init, n = 4000)
 svmBeads <- svmLabel(x, labels, type = 'bead', init = beads$init, index = index)
 
 }
