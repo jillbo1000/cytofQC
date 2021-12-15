@@ -54,8 +54,8 @@ rfLabel <- function(x, labels, type, init, index, standardize = TRUE) {
     stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
   }
   
-  Time <- x[, 1]
-  x <- x[, -1]
+  Time <- subset(x, select = c(get("Time")))
+  x <- subset(x, select = -c(get("Time")))
   
   if (standardize) {
     x <- as.data.frame(scale(x))

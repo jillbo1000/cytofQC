@@ -47,9 +47,9 @@
 #' @export
 initialDead <- function(x, labels, dna = TRUE, standardize = TRUE) {
 
-  Time <- x[, 1]
-  x <- x[, -1]
-
+  Time <- subset(x, select = c(get("Time")))
+  x <- subset(x, select = -c(get("Time")))
+  
   if (standardize) {
     x <- scale(x)
   }

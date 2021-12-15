@@ -45,8 +45,9 @@
 #' @export
 initialBead <- function(x, labels, threshold = 0.5) {
 
-  Time <- x[, 1]
-  x <- x[, -1]
+  Time <- subset(x, select = c(get("Time")))
+  x <- subset(x, select = -c(get("Time")))
+  
 
   unclassified.ind <- which(labels$label == "cell")
   cell <- x[unclassified.ind, ]

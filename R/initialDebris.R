@@ -59,9 +59,9 @@
 #' @export
 initialDebris <- function(x, labels, score = 3, standardize = TRUE) {
 
-  Time <- x[, 1]
-  x <- x[, -1]
-
+  Time <- subset(x, select = c(get("Time")))
+  x <- subset(x, select = -c(get("Time")))
+  
   if (standardize) {
     x <- scale(x)
   }
