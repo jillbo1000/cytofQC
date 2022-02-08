@@ -113,6 +113,8 @@
 }
 
 
+
+#' @param x The score (ie. debris score, doublet score, etc.) to be used for predicting each cell's label (eg. "doublet" vs. "cell"). 
 initialGuess <- function(x){
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]
