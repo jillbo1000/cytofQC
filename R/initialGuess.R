@@ -115,6 +115,11 @@
 
 
 #' @param x The score (ie. debris score, doublet score, etc.) to be used for predicting each cell's label (eg. "doublet" vs. "cell"). 
+#' @return A list with the following elements: \itemize{
+#' \item{\code{label}} {A vector of the same length as \code{x} providing the labels (\code{-1} for cells, \code{1} for non-cells, \code{0} for uncertain).}
+#' \item{\code{fit1}} {Summary of the 1-component (half Normal) model fit.}
+#' \item{\code{fit2}} {Summary of the 2-component (half Normal + Normal) model fit.}
+#' \item{\code{fit1}} {Summary of the 3-component (half Normal + 2 Normals) model fit.}}
 initialGuess <- function(x){
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]
