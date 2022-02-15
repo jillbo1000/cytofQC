@@ -82,15 +82,9 @@ initialDoublet <- function(x, labels, score = 3, standardize = TRUE) {
     stop("Invalid score selection")
   }
 
-  g <- find_groups(doubletScore[unclassified.ind])
-  mns <- by(doubletScore[unclassified.ind], g, mean)
-  doubletclus <- which.max(mns)
-  init <- rep(FALSE, nrow(x))
-  init[unclassified.ind] <- g == doubletclus
-
-  groups <- rep(NA, nrow(x))
-  groups[unclassified.ind] <- g
-
-  data.frame(Time, doubletScore = doubletScore, doubletGroup = groups, init = init)
-
+  g <- initialGuess(doubletScore[unclassified.ind])
+  init <- rep(0, nrow(x))
+  init[unclassified.ind] <- g$label
+  
+  data.frame(Time, doubletScore = doubletScore, init = init)
 }

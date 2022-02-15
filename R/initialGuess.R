@@ -1,15 +1,17 @@
 
-# initial guess labels based on mixture model (truncated normal + normals)
+# produce initial guess labels based on mixture model 
+# (truncated normal + normals)
 
-
+# fit a half normal
 .mixFit1 <- function(x){
     s0 <- sqrt(sum(x^2) / (length(x)-1))
     psingle <- dnorm(x, sd = s0, log = TRUE) + log(2)
     ll <- sum(psingle)
     return(list(pars = c(s0=s0), ll = ll, bic = -2*ll+1*log(length(x)),
-                dens = matrix(psingle)))
+                dens = matrix(exp(psingle))))
 }
 
+# fit a mixture of a half normal and a normal
 .mixFit2 <- function(x, thresh = .01){
     # hidden factor, Z in [0,1], is prob observation X originated from left distn.
     # p1 := mean(Z)
@@ -52,6 +54,7 @@
                 dens = cbind(pleft, pright)))
 }
 
+# fit a mixture of a half normal and two normals
 .mixFit3 <- function(x, thresh = .01){
     # 3-component mixture model
     # hidden factor, Z1 in [0,1], prob observation X originated from left distn.
@@ -100,6 +103,20 @@
         s2 <- weightedSd(x, Z[,2])
         s3 <- weightedSd(x, Z[,3])
     }
+    # ensure group 3 is highest
+    if(m2 > m3){
+        m4 <- m3
+        s4 <- s3
+        p4 <- p[3]
+        
+        m3 <- m2
+        s3 <- s2
+        p[3] <- p[2]
+        
+        m2 <- m4
+        s2 <- s4
+        p[2] <- p4
+    }
     pleft <- dnorm(x, mean = 0, sd = s1) * p[1] * 2
     pmid <- dnorm(x, mean = m2, sd = s2) * p[2]
     pright <- dnorm(x, mean = m3, sd = s3) * p[3]
@@ -111,7 +128,6 @@
                 ll = ll, bic = -2*ll+7*log(length(x)),
                 dens = cbind(pleft,pmid,pright)))
 }
-
 
 
 #' @param x The score (ie. debris score, doublet score, etc.) to be used for predicting each cell's label (eg. "doublet" vs. "cell"). 
@@ -139,15 +155,16 @@ initialGuess <- function(x){
         # pick two groups
         lab <- rep(-1, length(x))
         labxx <- rep(0, length(xx))
-        labxx[fit2$dens[,1] > log(99)+fit2$dens[,2]] <- -1
-        labxx[fit2$dens[,2] > log(99)+fit2$dens[,1]] <- 1
+        labxx[fit2$dens[,1] > 99*fit2$dens[,2]] <- -1
+        labxx[fit2$dens[,2] > 99*fit2$dens[,1]] <- 1
         lab[x >= cut] <- labxx
     }else{
         # pick three groups
         lab <- rep(-1, length(x))
         labxx <- rep(0, length(xx))
-        labxx[fit3$dens[,1] > log(99)+fit3$dens[,2]] <- -1
-        labxx[fit3$dens[,3] > fit3$dens[,1] &
+        labxx[fit3$dens[,1] > 99*fit3$dens[,3] &
+                fit3$dens[,1] > fit3$dens[,2]] <- -1
+        labxx[fit3$dens[,3] > 99*fit3$dens[,1] &
                   fit3$dens[,3] > fit3$dens[,2]] <- 1
         lab[x >= cut] <- labxx
     }
@@ -155,6 +172,7 @@ initialGuess <- function(x){
     return(list(label = lab, fit1 = fit1, fit2 = fit2, fit3 = fit3))
 }
 
+# produce a histogram of the score (x) and show the best fitting mixture model which produced the initial guess
 plotInitialGuess <- function(x, IG = NULL, fit = NULL){
     
     if(is.null(IG)){

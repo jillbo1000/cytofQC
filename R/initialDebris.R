@@ -81,36 +81,11 @@ initialDebris <- function(x, labels, score = 3, standardize = TRUE) {
   } else {
     stop("Invalid score selection")
   }
-
-  g <- mclust::Mclust(debrisScore[unclassified.ind], G = 2)$classification
-  r1 <- range(debrisScore[unclassified.ind][which(g == 1)])
-  r2 <- range(debrisScore[unclassified.ind][which(g == 2)])
-  m1 <- mean(debrisScore[unclassified.ind][which(g == 1)])
-  m2 <- mean(debrisScore[unclassified.ind][which(g == 2)])
-
-  if (r1[1] < r2[1] & r1[2] > r2[2]) { # group 1 is wide
-    if (m1 > m2) {
-      g[which(g == 1 & debrisScore[unclassified.ind] < m2)] <- 2
-    } else {
-      g[which(g == 1 & debrisScore[unclassified.ind] > m2)] <- 2
-    }
-  }
-
-  if (r2[1] < r1[1] & r2[2] > r1[2]) { # group 2 is wide
-    if (m2 > m1) {
-      g[which(g == 2 & debrisScore[unclassified.ind] < m1)] <- 1
-    } else {
-      g[which(g == 2 & debrisScore[unclassified.ind] > m1)] <- 1
-    }
-  }
-
-  debrisclus <- which.max(c(m1, m2))
-  init <- rep(FALSE, nrow(x))
-  init[unclassified.ind] <- g == debrisclus
-
-  groups <- rep(NA, nrow(x))
-  groups[unclassified.ind] <- g
-
-  data.frame(Time, debrisScore = debrisScore, debrisGroup = groups, init = init)
+  
+  g <- initialGuess(debrisScore[unclassified.ind])
+  init <- rep(0, nrow(x))
+  init[unclassified.ind] <- g$label
+  
+  data.frame(Time, debrisScore = debrisScore, init = init)
 
 }

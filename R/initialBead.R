@@ -47,7 +47,6 @@ initialBead <- function(x, labels, threshold = 0.5) {
 
   Time <- subset(x, select = c(get("Time")))
   x <- subset(x, select = -c(get("Time")))
-  
 
   unclassified.ind <- which(labels$label == "cell")
   cell <- x[unclassified.ind, ]
@@ -65,19 +64,9 @@ initialBead <- function(x, labels, threshold = 0.5) {
     stop("No bead channels in data")
   }
   
-  b2 <- b
-  b <- b[unclassified.ind]
+  g <- initialGuess(b[unclassified.ind])
+  init <- rep(0, nrow(x))
+  init[unclassified.ind] <- g$label
   
-  g <- find_groups(b[b > 0])
-  mns <- mns <- by(b[b > 0], g, mean)
-  beadgp <- which.max(mns)
-  isBeadMat <- rep(FALSE, nrow(cell))
-  if (length(levels(g)) > 1){
-    isBeadMat[b > 0][g == beadgp] <- TRUE
-  }
-
-  init <- rep(FALSE, nrow(x))
-  init[unclassified.ind] <- isBeadMat
-
-  data.frame(Time, beadScore = b2, init = init)
+  data.frame(Time, beadScore = b, init = init)
 }

@@ -36,7 +36,7 @@
 #'
 #' @export
 labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "dead"), 
-                    nn = "mnn", nnNum = 20, nTrain = 4000, loss = "auc") {
+                    nTrain = 4000, loss = "auc") {
   
   types <- tolower(types)
   if (length(setdiff(types, c("bead", "doublet", "debris", "dead")))) {
@@ -58,44 +58,42 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
     loss <- "auc"
   }
   
-  mnn <- NN(x, n = nnNum, type = nn)
-  
   model <- tolower(model)
   
   if (model == "svm") {
     if ("bead" %in% types) {
       beads <- initialBead(x, labels)
-      if (min(sum(beads$init), sum(!beads$init)) < tTest) {
+      if (min(sum(beads$init==-1), sum(beads$init==1)) < tTest) {
         types <- types[types != "bead"]
         warning("Not enough beads or non-beads in dataset to train a model with nTrain value specified. Bead data not fitted.")
       } else {
-        sure <- surematch(mnn, beads$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = beads$init, n = 4000)
-        labels <- svmLabel(x, labels, type = "bead", init = beads$init, index = ind, loss = loss)
+        sure <- beads$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = beads$init==1, n = 4000)
+        labels <- svmLabel(x, labels, type = "bead", init = beads$init==1, index = ind, loss = loss)
       }
     } 
     
     if ("doublet" %in% types) {
       doublets <- initialDoublet(x, labels, score = 1)
-      if (min(sum(doublets$init), sum(!doublets$init)) < tTest) {
+      if (min(sum(doublets$init==-1), sum(doublets$init==1)) < tTest) {
         types <- types[types != "doublet"]
         warning("Not enough doublets or non-doublet observations in dataset to train a model with nTrain value specified. Doublets not fitted.")
       } else {
-        sure <- surematch(mnn, doublets$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = doublets$init, n = 4000)
-        labels <- svmLabel(x, labels, type = "doublet", init = doublets$init, index = ind, loss = loss)
+        sure <- doublets$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = doublets$init==1, n = 4000)
+        labels <- svmLabel(x, labels, type = "doublet", init = doublets$init==1, index = ind, loss = loss)
       }
     }
     
     if ("debris" %in% types) {
       debris <- initialDebris(x, labels, score = 1)
-      if (min(sum(debris$init), sum(!debris$init)) < tTest) {
+      if (min(sum(debris$init==-1), sum(debris$init==1)) < tTest) {
         types <- types[types != "debris"]
         warning("Not enough debris or non-debris observations in dataset to train a model with nTrain value specified. Debris not fitted.")
       } else {
-        sure <- surematch(mnn, debris$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = debris$init, n = 4000)
-        labels <- svmLabel(x, labels, type = "debris", init = debris$init, index = ind, loss = loss)
+        sure <- debris$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = debris$init==1, n = 4000)
+        labels <- svmLabel(x, labels, type = "debris", init = debris$init==1, index = ind, loss = loss)
       }
     }
     
@@ -105,45 +103,45 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
         types <- types[types != "dead"]
         warning("Not enough dead or non-dead observations in dataset to train a model with nTrain value specified. Live/dead not fitted.")
       } else {
-        sure <- surematch(mnn, dead$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = dead$init, n = 4000)
-        labels <- svmLabel(x, labels, type = "dead", init = dead$init, index = ind, loss = loss)
+        sure <- dead$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = dead$init==1, n = 4000)
+        labels <- svmLabel(x, labels, type = "dead", init = dead$init==1, index = ind, loss = loss)
       }
     }	  
   } else if (model == "gbm") {
     if ("bead" %in% types) {
       beads <- initialBead(x, labels)
-      if (min(sum(beads$init), sum(!beads$init)) < tTest) {
+      if (min(sum(beads$init==-1), sum(beads$init==1)) < tTest) {
         types <- types[types != "bead"]
         warning("Not enough beads or non-beads in dataset to train a model with nTrain value specified. Bead data not fitted.")
       } else {
-        sure <- surematch(mnn, beads$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = beads$init, n = 4000)
-        labels <- gbmLabel(x, labels, type = "bead", init = beads$init, index = ind, loss = loss)
+        sure <- beads$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = beads$init==1, n = 4000)
+        labels <- gbmLabel(x, labels, type = "bead", init = beads$init==1, index = ind, loss = loss)
       }
     } 
     
     if ("doublet" %in% types) {
       doublets <- initialDoublet(x, labels, score = 1)
-      if (min(sum(doublets$init), sum(!doublets$init)) < tTest) {
+      if (min(sum(doublets$init==-1), sum(doublets$init==1)) < tTest) {
         types <- types[types != "doublet"]
         warning("Not enough doublets or non-doublet observations in dataset to train a model with nTrain value specified. Doublets not fitted.")
       } else {
-        sure <- surematch(mnn, doublets$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = doublets$init, n = 4000)
-        labels <- gbmLabel(x, labels, type = "doublet", init = doublets$init, index = ind, loss = loss)
+        sure <- doublets$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = doublets$init==1, n = 4000)
+        labels <- gbmLabel(x, labels, type = "doublet", init = doublets$init==1, index = ind, loss = loss)
       }
     }
     
     if ("debris" %in% types) {
       debris <- initialDebris(x, labels, score = 1)
-      if (min(sum(debris$init), sum(!debris$init)) < tTest) {
+      if (min(sum(debris$init==-1), sum(debris$init==1)) < tTest) {
         types <- types[types != "debris"]
         warning("Not enough debris or non-debris observations in dataset to train a model with nTrain value specified. Debris not fitted.")
       } else {
-        sure <- surematch(mnn, debris$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = debris$init, n = 4000)
-        labels <- gbmLabel(x, labels, type = "debris", init = debris$init, index = ind, loss = loss)
+        sure <- debris$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = debris$init==1, n = 4000)
+        labels <- gbmLabel(x, labels, type = "debris", init = debris$init==1, index = ind, loss = loss)
       }
     }
     
@@ -153,45 +151,45 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
         types <- types[types != "dead"]
         warning("Not enough dead or non-dead observations in dataset to train a model with nTrain value specified. Live/dead not fitted.")
       } else {
-        sure <- surematch(mnn, dead$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = dead$init, n = 4000)
-        labels <- gbmLabel(x, labels, type = "dead", init = dead$init, index = ind, loss = loss)
+        sure <- dead$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = dead$init==1, n = 4000)
+        labels <- gbmLabel(x, labels, type = "dead", init = dead$init==1, index = ind, loss = loss)
       }
     }	  
   } else if (model == "rf") {
     if ("bead" %in% types) {
       beads <- initialBead(x, labels)
-      if (min(sum(beads$init), sum(!beads$init)) < tTest) {
+      if (min(sum(beads$init==-1), sum(beads$init==1)) < tTest) {
         types <- types[types != "bead"]
         warning("Not enough beads or non-beads in dataset to train a model with nTrain value specified. Bead data not fitted.")
       } else {
-        sure <- surematch(mnn, beads$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = beads$init, n = 4000)
-        labels <- rfLabel(x, labels, type = "bead", init = beads$init, index = ind)
+        sure <- beads$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = beads$init==1, n = 4000)
+        labels <- rfLabel(x, labels, type = "bead", init = beads$init==1, index = ind)
       }
     } 
     
     if ("doublet" %in% types) {
       doublets <- initialDoublet(x, labels, score = 1)
-      if (min(sum(doublets$init), sum(!doublets$init)) < tTest) {
+      if (min(sum(doublets$init==-1), sum(doublets$init==1)) < tTest) {
         types <- types[types != "doublet"]
         warning("Not enough doublets or non-doublet observations in dataset to train a model with nTrain value specified. Doublets not fitted.")
       } else {
-        sure <- surematch(mnn, doublets$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = doublets$init, n = 4000)
-        labels <- rfLabel(x, labels, type = "doublet", init = doublets$init, index = ind)
+        sure <- doublets$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = doublets$init==1, n = 4000)
+        labels <- rfLabel(x, labels, type = "doublet", init = doublets$init==1, index = ind)
       }
     }
     
     if ("debris" %in% types) {
       debris <- initialDebris(x, labels, score = 1)
-      if (min(sum(debris$init), sum(!debris$init)) < tTest) {
+      if (min(sum(debris$init==-1), sum(debris$init==1)) < tTest) {
         types <- types[types != "debris"]
         warning("Not enough debris or non-debris observations in dataset to train a model with nTrain value specified. Debris not fitted.")
       } else {
-        sure <- surematch(mnn, debris$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = debris$init, n = 4000)
-        labels <- rfLabel(x, labels, type = "debris", init = debris$init, index = ind)
+        sure <- debris$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = debris$init==1, n = 4000)
+        labels <- rfLabel(x, labels, type = "debris", init = debris$init==1, index = ind)
       }
     }
     
@@ -201,9 +199,9 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
         types <- types[types != "dead"]
         warning("Not enough dead or non-dead observations in dataset to train a model with nTrain value specified. Live/dead not fitted.")
       } else {
-        sure <- surematch(mnn, dead$init, threshold = 0)
-        ind <- modelData(labels, subset = sure$match, init = dead$init, n = 4000)
-        labels <- rfLabel(x, labels, type = "dead", init = dead$init, index = ind)
+        sure <- dead$init %in% c(-1,1)
+        ind <- modelData(labels, subset = sure, init = dead$init==1, n = 4000)
+        labels <- rfLabel(x, labels, type = "dead", init = dead$init==1, index = ind)
       }
     }	  
   } else {
