@@ -78,9 +78,9 @@ initialDoublet <- function(x, labels, score = 3, standardize = TRUE) {
     stop("Invalid score selection")
   }
 
-  g <- initialGuess(doubletScore[unclassified.ind])
-  init <- rep(FALSE, nrow(x))
-  init[unclassified.ind] <- (g$label != min(g$label))
+  g <- initialGuess(doubletScore[unclassified.ind], middleGroup = 1)
+  init <- rep(0, nrow(x))
+  init[unclassified.ind] <- g$label
   
   data.frame(Time = x[, 1], doubletScore = doubletScore, init = init)
 }

@@ -58,8 +58,8 @@ initialBead <- function(x, labels) {
   }
   
   g <- initialGuess(b[unclassified.ind])
-  init <- rep(FALSE, nrow(x))
-  init[unclassified.ind] <- (g$label == max(g$label))
+  init <- rep(0, nrow(x))
+  init[unclassified.ind] <- g$label
   
   data.frame(Time = x[, "Time"], beadScore = b, init = init)
 }
