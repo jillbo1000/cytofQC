@@ -26,9 +26,6 @@ the \code{data.frame} are:
 \item{Time}{The time stamp from the original data. It is needed to ensure
 that the labels can be matched with the original cell data.}
 \item{doubletScore}{The computed doublet score.}
-\item{doubletGroup}{The group that the score was assigned to. This is
-different than the label because the doublets typically cluster into
-three groups.}
 \item{init}{TRUE if the observation is determined to be a doublet and
 FALSE if the observation is not a doublet during this initial
 classification.}
@@ -59,7 +56,7 @@ be selected by its number on the following list:
 \enumerate{
   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width)}
   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width) + abs(Center)}
-  \item{DNA1 + DNA2 + 0.5(Residual + Event_length - Offset - 0.5(Width) + abs(Center))}
+  \item{0.3 * (DNA1 + DNA2 + Event_length) + Residual + Center + (max(Offset))}
 }
 }
 \examples{

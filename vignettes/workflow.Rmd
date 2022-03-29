@@ -17,7 +17,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
   message = FALSE, 
-  warning = FALSE
+  warning = FALSE,
+  cache = TRUE
 )
 ```
 
@@ -31,7 +32,7 @@ library(ggplot2)
 The function \code{dataPrep} read in the data and formats a \code{data.frame} that contains all of the QC variables. The variables are renamed so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the \code{log1p} function. The output is a \code{matrix}. 
 
 ```{r}
-f <- "../../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
+f <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
 tech <- dataPrep(f)
 head(tech)
 ```
@@ -41,7 +42,7 @@ head(tech)
 The integral function of cytofQC is \code{labelQC}. A \code{data.frame} obtained from \code{dataPrep} can be passed to \code{labelQC} with no other arguments and it will return a \code{data.frame} that contains all of the labels and the probability that each observation belongs to each of the specified labels. The data we are using for this vignette has only live cells so we call \code{labelQC} in a way that omits the labeling of the live/dead cells. The following call will label the cells using a support vector machine and mutual nearest neighbors. 
 
 ```{r}
-labels <- labelQC(tech, types = c("bead", "doublet", "debris"))
+labels <- labelQC(tech, types = c("bead", "doublet", "debris"), nTrain = 1000)
 head(labels)
 table(labels$label)
 ```
@@ -58,25 +59,6 @@ table(labels$label)
 ```
 
 
-# Nearest neighbors
-
-The next piece in the process is finding the nearest neighbors for each of the observations. There are currently two choices: k-means nearest neighbors and mutual nearest neighbors. This piece only needs to be done once. 
-
-```{r eval = FALSE}
-# K-means nearest neighbors
-knn <- NN(tech, n = 10, type = "knn")
-head(knn)
-dim(knn)
-
-```
-
-```{r}
-# Mutual nearest neighbors
-mnn <- NN(tech, n = 20, type = "mnn")
-head(mnn)
-dim(mnn)
-
-```
 
 # Beads
 
@@ -87,7 +69,7 @@ The beads are typically the first type of observation that should be labeled. Th
 ```{r}
 beads <- initialBead(tech, labels)
 head(beads)
-sum(beads$init)
+table(beads$init)
 ```
 
 The function \code{cytofHist} can be used to visualize the data with regard to a grouping variable. This allows us to see what is classified as beads in the original bead data. TRUE indicates observations that are initially characterized as beads. 
@@ -128,9 +110,7 @@ The user can change how strict the threshold for being a match is by adjusting t
 
 
 ```{r}
-sure <- surematch(mnn, beads$init, threshold = 0)
-head(sure)
-sum(sure$Mismatch)
+sure <- beads$init %in% c(-1,1)
 ```
 
 ## Create a subset of data to train a model
@@ -138,10 +118,9 @@ sum(sure$Mismatch)
 We plan to create a model using a smaller set of data. This next piece selects a subset of data points to build the model. Only the matches selected by the previous piece are considered to be in this subset. If no points are designated as sure matches, the entire set of unclassified data points (those that still have a *cell* label) is sampled. The data are sampled at random, but weighted to ensure we have a fairly balanced dataset to build the labeling model with. The function \code{modelData|} returns a set of indices that identifies the points in the dataset that will be used to compute the labeling model. 
 
 ```{r}
-ind <- modelData(labels, subset = sure$match, init = beads$init, n = 4000)
+ind <- modelData(labels, subset = sure, init = beads$init==1, n = 4000)
 length(ind)
 head(ind)
-
 ```
 
 The following histogram shows where the selected points are relative to the rest of the points for each of the bead channels. Note that TRUE designates the points that were selected to train the model. 
@@ -167,10 +146,9 @@ ggpubr::ggarrange(plotlist = beadPlots3, ncol = 2, nrow = 2)
 There are currently three models that can be used to classify the beads: support vector machines (SVMs), random forests, and gradient boosting machines (GBMs). The method below uses random forests, but the process is identical for SVMs and GBMs. The functions for SVMs and GBMs are \code{svmLabel} and \code{gbmLabel}. The labeling functions take the same input and produce identical output. The output is a \code{data.frame} that is identical to the \code{qcDataFrame} but with the beads labeled as beads and the predicted probability of being a bead assigned to each observation in the *bead* variable. This is the *labels* \code{data.frame} that should be used for the next step because the *bead* label is needed for all other QC labels. 
 
 ```{r}
-rf.labs <- rfLabel(tech, labels, type = "bead", init = beads$init, index = ind)
+rf.labs <- rfLabel(tech, labels, type = "bead", init = beads$init==1, index = ind)
 head(rf.labs)
 table(rf.labs$label)
-
 ```
 
 The following plots show a histogram of the bead measurement with the groups for each cell type shown in the plot. Note that the observations with a bead measurement of zero have been omitted from the plot because they dominate the histogram and make it difficult to see the three groups. 
@@ -210,7 +188,7 @@ head(doublets)
 This histogram shows the initical classification of the doublet scores for the unclassified points (all of those not labeled *GDPzero* or *bead*). The scores for the classified points can be seen on the histogram by selection \code{na.rm = FALSE}. 
 
 ```{r}
-cytofHist(doublets$doubletScore, doublets$doubletGroup, na.rm = TRUE, 
+cytofHist(doublets$doubletScore, doublets$init, na.rm = TRUE, 
           title = "Doublet score and initial classification")
 ```
 
@@ -221,18 +199,18 @@ cytofHist(doublets$doubletScore, doublets$doubletGroup, na.rm = TRUE,
 As with the beads, the next step is to identify the observations that are similar to each other in regard to the doublet score. The process is identical to the one used to assign the beads.  
 
 ```{r}
-sureDoublet <- surematch(mnn, doublets$init, threshold = 0)
+sureDoublet <- doublets$init %in% c(-1,1)
 head(sureDoublet)
-sum(sureDoublet$match)
+sum(sureDoublet)
 ```
 
 The hisograms below show where the matched points are in relation to the rest of the points. This lets us see that the matched doublets are not too near the boundary. 
 
 ```{r}
 mmPlots <- NULL
-mmPlots[[1]] <- cytofHist(doublets$doubletScore, sureDoublet$match, type = "count", 
+mmPlots[[1]] <- cytofHist(doublets$doubletScore, sureDoublet, type = "count", 
           title = "Matched doublets")
-mmPlots[[2]] <- cytofHist(doublets$doubletScore, sureDoublet$match, type = "density", 
+mmPlots[[2]] <- cytofHist(doublets$doubletScore, sureDoublet, type = "density", 
           title = "Matched doublets")
 
 ```
@@ -246,7 +224,7 @@ ggpubr::ggarrange(plotlist = mmPlots, ncol = 2, nrow = 1)
 This code chunk shows how to select a random set of doublets and non-doublets to use to train a model.  
 
 ```{r}
-d.rf.index <- modelData(rf.labs, subset = sureDoublet$match, init = doublets$init, n = 4000)
+d.rf.index <- modelData(rf.labs, subset = sureDoublet, init = doublets$init==1, n = 4000)
 
 ```
 
@@ -265,7 +243,7 @@ cytofHist(x = doublets$doubletScore, group = index, type = "count",
 This shows the classification of doublets with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
 
 ```{r}
-rf.labs <- rfLabel(tech, rf.labs, type = "doublet", init = doublets$init, index = d.rf.index)
+rf.labs <- rfLabel(tech, rf.labs, type = "doublet", init = doublets$init==1, index = d.rf.index)
 head(rf.labs)
 table(rf.labs$label)
 
@@ -295,7 +273,7 @@ head(debris)
 This histogram shows a classification of the debris scores for the unclassified points (all of those not labeled as *bead*, *doublet*, or *GDPzero*). The scores for the classified points can be seen on the histogram by selecting \code{na.rm = FALSE}. A label of 1 indicates a low debris score, or less likely to be debris, and a label of 2 indicates it is likely debris. 
 
 ```{r}
-cytofHist(debris$debrisScore, debris$debrisGroup, na.rm = TRUE, 
+cytofHist(debris$debrisScore, debris$init, na.rm = TRUE, 
           title = "Initial debris classification")
 ```
 
@@ -304,18 +282,18 @@ cytofHist(debris$debrisScore, debris$debrisGroup, na.rm = TRUE,
 This next part identifies the observations that are mismatched from its neighbors in regard to debris assignment using the nearest neighbors matrix. 
 
 ```{r}
-debm <- surematch(mnn, debris$init, threshold = 0)
+debm <- debris$init %in% c(-1,1)
 head(debm)
-sum(debm$Mismatch)
+sum(debm)
 ```
 
 The following histogram shows the debris scores for the observations that are candidates for model training. Note that the matched observations are away from the boundary between the two groups. 
 
 ```{r}
 mmPlots <- NULL
-mmPlots[[1]] <- cytofHist(debris$debrisScore, debm$match, type = "count", 
+mmPlots[[1]] <- cytofHist(debris$debrisScore, debm, type = "count", 
           title = "Mismatched debris")
-mmPlots[[2]] <- cytofHist(debris$debrisScore, debm$match, type = "density", 
+mmPlots[[2]] <- cytofHist(debris$debrisScore, debm, type = "density", 
           title = "Mismatched debris")
 
 ```
@@ -328,7 +306,7 @@ ggpubr::ggarrange(plotlist = mmPlots, ncol = 2, nrow = 1)
 The debris have enough matches to draw from to select a dataset from the matches. The following code chunk selects a training dataset for the model. 
 
 ```{r}
-de.rf.index <- modelData(rf.labs, subset = debm$match, init = debris$init, n = 4000)
+de.rf.index <- modelData(rf.labs, subset = debm, init = debris$init==1, n = 4000)
 
 ```
 
@@ -347,7 +325,7 @@ cytofHist(x = debris$debrisScore, group = index, type = "density",
 The following code show how to do the final classification of debris with random forests. Note that the label dataset from the last round of classifying is used as an input and the results are assigned to the same object. 
 
 ```{r}
-rf.labs <- rfLabel(tech, rf.labs, type = "debris", init = debris$init, index = de.rf.index)
+rf.labs <- rfLabel(tech, rf.labs, type = "debris", init = debris$init==1, index = de.rf.index)
 head(rf.labs)
 table(rf.labs$label)
 

@@ -4,7 +4,7 @@
 \alias{initialBead}
 \title{Preliminary bead classification.}
 \usage{
-initialBead(x, labels, threshold = 0.5)
+initialBead(x, labels)
 }
 \arguments{
 \item{x}{A \code{matrix} created with \code{\link{dataPrep}}. Note that the
@@ -12,10 +12,6 @@ data should not be standardized. All of the bead channels should be
 non-negative.}
 
 \item{labels}{A \code{data.frame} created with \code{\link{qcDataFrame}}.}
-
-\item{threshold}{Number in [0, 1] that indicates the number of
-bead channels an observation needs to be flagged as a bead to be
-considered a bead.}
 }
 \value{
 A \code{data.frame} that contains the bead designation for each

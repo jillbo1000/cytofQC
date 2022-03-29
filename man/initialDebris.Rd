@@ -57,9 +57,9 @@ Several options are available for computing the debris score. The
 following list shows the debris score calculations. Each one can
 be selected by its number on the following list:
 \enumerate{
-  \item{Residual - DNA1 - DNA2 - Event_length - Center - 0.5 * Width}
-  \item{Residual + Offset - DNA1 - DNA2 - Event_length - Center - 0.5(Width)}
+  \item{1 - (DNA1 + DNA2 + Event_length - Center - Width + Offset)}
   \item{Residual + Offset - 2(DNA1) - 2(DNA2) - Event_length - Center - 0.5(Width)}
+  \item{1 - (DNA1 + DNA2 + Event_length)}
 }
 }
 \examples{
