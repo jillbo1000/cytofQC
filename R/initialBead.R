@@ -4,9 +4,6 @@
 #' data should not be standardized. All of the bead channels should be
 #' non-negative.
 #' @param labels A \code{data.frame} created with \code{\link{qcDataFrame}}.
-#' @param threshold Number in [0, 1] that indicates the number of
-#' bead channels an observation needs to be flagged as a bead to be
-#' considered a bead.
 #'
 #' @return A \code{data.frame} that contains the bead designation for each
 #' bead channel and the overall bead designation for the observation. The
@@ -43,10 +40,7 @@
 #' beads <- initialBead(x, labels = labels)
 #'
 #' @export
-initialBead <- function(x, labels, threshold = 0.5) {
-
-  Time <- subset(x, select = c(get("Time")))
-  x <- subset(x, select = -c(get("Time")))
+initialBead <- function(x, labels) {
 
   unclassified.ind <- which(labels$label == "cell")
   cell <- x[unclassified.ind, ]
@@ -65,8 +59,8 @@ initialBead <- function(x, labels, threshold = 0.5) {
   }
   
   g <- initialGuess(b[unclassified.ind])
-  init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
+  init <- rep(FALSE, nrow(x))
+  init[unclassified.ind] <- (g$label == max(g$label))
   
-  data.frame(Time, beadScore = b, init = init)
+  data.frame(Time = x[, "Time"], beadScore = b, init = init)
 }

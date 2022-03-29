@@ -15,9 +15,6 @@
 #' \item{Time}{The time stamp from the original data. It is needed to ensure
 #' that the labels can be matched with the original cell data.}
 #' \item{doubletScore}{The computed doublet score.}
-#' \item{doubletGroup}{The group that the score was assigned to. This is
-#' different than the label because the doublets typically cluster into
-#' three groups.}
 #' \item{init}{TRUE if the observation is determined to be a doublet and
 #' FALSE if the observation is not a doublet during this initial
 #' classification.}
@@ -45,7 +42,7 @@
 #' \enumerate{
 #'   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width)}
 #'   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width) + abs(Center)}
-#'   \item{DNA1 + DNA2 + 0.5(Residual + Event_length - Offset - 0.5(Width) + abs(Center))}
+#'   \item{0.3 * (DNA1 + DNA2 + Event_length) + Residual + Center + (max(Offset))}
 #' }
 #'
 #' @examples
@@ -57,34 +54,31 @@
 #' @export
 initialDoublet <- function(x, labels, score = 3, standardize = TRUE) {
 
-  Time <- subset(x, select = c(get("Time")))
-  x <- subset(x, select = -c(get("Time")))
-  
   if (standardize) {
-    x <- scale(x)
+    xs <- scale(x[, -1])
   }
 
   unclassified.ind <- which(labels$label == "cell")
-  cell <- data.frame(x[unclassified.ind, ])
+  cell <- data.frame(xs[unclassified.ind, ])
 
   if (score == 1) {
-    doubletScore <- x[, "DNA1"] + x[, "DNA2"] + x[, "Residual"] +
-      x[, "Event_length"] - x[, "Offset"] - 0.5 * x[, "Width"]
+    doubletScore <- xs[, "DNA1"] + xs[, "DNA2"] + xs[, "Residual"] +
+      xs[, "Event_length"] - xs[, "Offset"] - 0.5 * xs[, "Width"]
   } else if (score == 2) {
-    doubletScore <- x[, "DNA1"] + x[, "DNA2"] + x[, "Residual"] +
-      x[, "Event_length"] - x[, "Offset"] - 0.5 * x[, "Width"] +
-      abs(x[, "Center"])
+    doubletScore <- xs[, "DNA1"] + xs[, "DNA2"] + xs[, "Residual"] +
+      xs[, "Event_length"] - xs[, "Offset"] - 0.5 * xs[, "Width"] +
+      abs(xs[, "Center"])
   } else if (score == 3) {
-    doubletScore <- x[, "DNA1"] + x[, "DNA2"] +
-      0.5 * (x[, "Residual"] + x[, "Event_length"] - x[, "Offset"]
-             - 0.5 * x[, "Width"] + abs(x[, "Center"]))
+    doubletScore <- 0.3 * (xs[, "DNA1"] + xs[, "DNA2"] +
+      xs[, "Event_length"]) + xs[, "Residual"] + xs[, "Center"] +
+      (max(xs[, "Offset"]) - xs[, "Offset"])
   } else {
     stop("Invalid score selection")
   }
 
   g <- initialGuess(doubletScore[unclassified.ind])
-  init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
+  init <- rep(FALSE, nrow(x))
+  init[unclassified.ind] <- (g$label != min(g$label))
   
-  data.frame(Time, doubletScore = doubletScore, init = init)
+  data.frame(x[, 1], doubletScore = doubletScore, init = init)
 }
