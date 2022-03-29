@@ -45,9 +45,9 @@
 #' following list shows the debris score calculations. Each one can
 #' be selected by its number on the following list:
 #' \enumerate{
-#'   \item{Residual - DNA1 - DNA2 - Event_length - Center - 0.5 * Width}
-#'   \item{Residual + Offset - DNA1 - DNA2 - Event_length - Center - 0.5(Width)}
+#'   \item{1 - (DNA1 + DNA2 + Event_length - Center - Width + Offset)}
 #'   \item{Residual + Offset - 2(DNA1) - 2(DNA2) - Event_length - Center - 0.5(Width)}
+#'   \item{1 - (DNA1 + DNA2 + Event_length)}
 #' }
 #'
 #' @examples
@@ -59,33 +59,31 @@
 #' @export
 initialDebris <- function(x, labels, score = 3, standardize = TRUE) {
 
-  Time <- subset(x, select = c(get("Time")))
-  x <- subset(x, select = -c(get("Time")))
-  
   if (standardize) {
-    x <- scale(x)
+    xs <- scale(x[, -1])
+  } else {
+    xs <- x
   }
-
+  
   unclassified.ind <- which(labels$label == "cell")
-  cell <- data.frame(x[unclassified.ind, ])
-
+  cell <- data.frame(xs[unclassified.ind, ])
+  
   if (score == 1) {
-    debrisScore <- x[, "Residual"] - x[, "DNA1"] - x[, "DNA2"] -
-      x[, "Event_length"] - x[, "Center"] - 0.5 * x[, "Width"]
+    debrisScore <- 1 - (x[, "DNA1"] + x[, "DNA2"] + x[, "Event_length"] -
+                          x[, "Center"] - x[, "Width"] + x[, "Offset"])
   } else if (score == 2) {
-    debrisScore <- x[, "Residual"] + x[, "Offset"] - x[, "DNA1"] -
-      x[, "DNA2"] - x[, "Event_length"] - x[, "Center"] - 0.5 * x[, "Width"]
-  } else if (score == 3) {
     debrisScore <- x[, "Residual"] + x[, "Offset"] - 2.0 * x[, "DNA1"] -
       2.0 * x[, "DNA2"] - x[, "Event_length"] - x[, "Center"] - 0.5 * x[, "Width"]
+  } else if (score == 3) {
+    debrisScore <- 1 - (x[, "DNA1"] + x[, "DNA2"] + x[, "Event_length"])
   } else {
     stop("Invalid score selection")
   }
   
-  g <- initialGuess(debrisScore[unclassified.ind])
+  g <- initialGuess(debrisScore[unclassified.ind], middleGroup = 1)
   init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
+  init[unclassified.ind] <- (g$label != min(g$label))
   
-  data.frame(Time, debrisScore = debrisScore, init = init)
+  data.frame(Time = x[, 1], debrisScore = debrisScore, init = init)
 
 }

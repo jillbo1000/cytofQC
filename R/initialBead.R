@@ -43,8 +43,7 @@
 initialBead <- function(x, labels) {
 
   unclassified.ind <- which(labels$label == "cell")
-  cell <- x[unclassified.ind, ]
-  bead_channels <- grep("Bead", colnames(cell))
+  bead_channels <- grep("Bead", colnames(x))
 
   if (min(bead_channels) < 0) {
     stop("Bead data should all be non-negative")

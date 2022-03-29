@@ -56,6 +56,8 @@ initialDoublet <- function(x, labels, score = 3, standardize = TRUE) {
 
   if (standardize) {
     xs <- scale(x[, -1])
+  } else {
+    xs <- x
   }
 
   unclassified.ind <- which(labels$label == "cell")
@@ -80,5 +82,5 @@ initialDoublet <- function(x, labels, score = 3, standardize = TRUE) {
   init <- rep(FALSE, nrow(x))
   init[unclassified.ind] <- (g$label != min(g$label))
   
-  data.frame(x[, 1], doubletScore = doubletScore, init = init)
+  data.frame(Time = x[, 1], doubletScore = doubletScore, init = init)
 }
