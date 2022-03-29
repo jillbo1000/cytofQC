@@ -8,6 +8,7 @@ labelQC(
   x,
   model = "svm",
   types = c("bead", "doublet", "debris", "dead"),
+  nTrain = 4000,
   loss = "auc"
 )
 }
@@ -24,6 +25,12 @@ machine, or "rf" for a random forest.}
 \item{loss}{Specifies the type of loss used to tune the model. Can 
 be either "auc" or "class". This argument is ignored if random
 forest is used as the model.}
+
+\item{nn}{Specifies if k-nearest neighbors ("knn") or mutual nearest
+neighbors ("mnn") for initial sample selection.}
+
+\item{nnNum}{The number of nearest neighbors to compute in the 
+nearest neighbors matrix.}
 }
 \value{
 A \code{label} data.frame is returned with the labels
