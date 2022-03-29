@@ -82,8 +82,7 @@ initialDebris <- function(x, labels, score = 3, standardize = TRUE) {
   
   g <- initialGuess(debrisScore[unclassified.ind], middleGroup = 1)
   init <- rep(0, nrow(x))
-  init[unclassified.ind] <- (g$label != min(g$label))
+  init[unclassified.ind] <- g$label
   
   data.frame(Time = x[, 1], debrisScore = debrisScore, init = init)
-
 }

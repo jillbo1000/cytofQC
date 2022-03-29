@@ -57,7 +57,7 @@ initialBead <- function(x, labels) {
     stop("No bead channels in data")
   }
   
-  g <- initialGuess(b[unclassified.ind])
+  g <- initialGuess(b[unclassified.ind], middleGroup = 0)
   init <- rep(0, nrow(x))
   init[unclassified.ind] <- g$label
   
