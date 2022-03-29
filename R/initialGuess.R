@@ -3,6 +3,7 @@
 # (truncated normal + normals)
 
 # fit a half normal
+#' @import stats
 .mixFit1 <- function(x){
     s0 <- sqrt(sum(x^2) / (length(x)-1))
     psingle <- dnorm(x, sd = s0, log = TRUE) + log(2)
@@ -12,6 +13,7 @@
 }
 
 # fit a mixture of a half normal and a normal
+#' @importFrom matrixStats weightedSd
 .mixFit2 <- function(x, thresh = .01){
     # hidden factor, Z in [0,1], is prob observation X originated from left distn.
     # p1 := mean(Z)
@@ -136,7 +138,7 @@
 #' \item{\code{fit1}} {Summary of the 1-component (half Normal) model fit.}
 #' \item{\code{fit2}} {Summary of the 2-component (half Normal + Normal) model fit.}
 #' \item{\code{fit1}} {Summary of the 3-component (half Normal + 2 Normals) model fit.}}
-initialGuess <- function(x){
+initialGuess <- function(x, middleGroup = 0){
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]
     xx <- x[x >= cut]
@@ -160,12 +162,28 @@ initialGuess <- function(x){
         lab[x >= cut] <- labxx
     }else{
         # pick three groups
+        stopifnot(middleGroup %in% c(-1,0,1))
+        
         lab <- rep(-1, length(x))
         labxx <- rep(0, length(xx))
-        labxx[fit3$dens[,1] > 99*fit3$dens[,3] &
-                fit3$dens[,1] > fit3$dens[,2]] <- -1
-        labxx[fit3$dens[,3] > 99*fit3$dens[,1] &
-                  fit3$dens[,3] > fit3$dens[,2]] <- 1
+        if(middleGroup == 0){
+            labxx[fit3$dens[,1] > 99*fit3$dens[,3] &
+                      fit3$dens[,1] > fit3$dens[,2]] <- -1
+            labxx[fit3$dens[,3] > 99*fit3$dens[,1] &
+                      fit3$dens[,3] > fit3$dens[,2]] <- 1
+        }
+        if(middleGroup == 1){
+            labxx[fit3$dens[,1] > 99*fit3$dens[,3] &
+                      fit3$dens[,1] > 99*fit3$dens[,2]] <- -1
+            labxx[fit3$dens[,3] > 99*fit3$dens[,1] |
+                      fit3$dens[,2] > 99*fit3$dens[,1]] <- 1
+        }
+        if(middleGroup == -1){
+            labxx[fit3$dens[,1] > 99*fit3$dens[,3] |
+                      fit3$dens[,2] > 99*fit3$dens[,3]] <- -1
+            labxx[fit3$dens[,3] > 99*fit3$dens[,1] &
+                      fit3$dens[,3] > 99*fit3$dens[,2]] <- 1
+        }
         lab[x >= cut] <- labxx
     }
     
