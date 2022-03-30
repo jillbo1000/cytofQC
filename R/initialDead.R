@@ -46,57 +46,37 @@
 #'
 #' @export
 initialDead <- function(x, labels, dna = TRUE, standardize = TRUE) {
-
-  Time <- subset(x, select = c(get("Time")))
-  x <- subset(x, select = -c(get("Time")))
-  
-  if (standardize) {
-    x <- scale(x)
-  }
-
-  unclassified.ind <- which(labels$label == "cell")
-  cell <- x[unclassified.ind, ]
-
-  viability <- x[, grep("Viability", colnames(x))]
-
-  if (ncol(data.frame(viability)) > 1) {
-    viability <- rowSums(viability, na.rm = TRUE)
-  }
-
-  if (dna) {
-    dnaData <- x[, grep("DNA", colnames(x))]
-    if (ncol(dnaData) > 1) {
-      n <- ncol(dnaData)
-      dnaData <- rowSums(dnaData, na.rm = TRUE)
-      dnaData <- dnaData / n
+    
+    if (standardize) {
+        xs <- scale(x[, -1])
+    } else {
+        xs <- x
     }
-    deadScore <- viability + 0.5 * dnaData
-  } else {
-    deadScore <- viability
-  }
+    
+    unclassified.ind <- which(labels$label == "cell")
 
-  # live.ind <- which(viability == min(viability))
-  # live.un <- live.ind[live.ind %in% unclassified.ind]
-  # 
-  # g <- find_groups(deadScore[live.un])
-  # mns <- by(deadScore[live.un], g, mean)
-  # deadclus <- which.max(mns)
-  # liveclus <- which.min(mns)
-  # 
-  # gAll <- rep(NA, nrow(x))
-  # gAll[unclassified.ind] <- deadclus
-  # gAll[live.un] <- liveclus
-  # 
-  # init <- rep(FALSE, nrow(x))
-  # 
-  # if (length(unique(g)) > 1) {
-  #   init[unclassified.ind] <- gAll[unclassified.ind] == deadclus
-  # }
+    viability <- xs[, grep("Viability", colnames(xs))]
 
-  g <- initialGuess(deadScore[unclassified.ind])
-  init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
-  
-  data.frame(Time, deadScore = deadScore, init = init)
-
+    if (ncol(data.frame(viability)) > 1) {
+        viability <- rowSums(viability, na.rm = TRUE)
+    } 
+    
+    if (dna) {
+        dnaData <- x[, grep("DNA", colnames(x))]
+        if (ncol(dnaData) > 1) {
+            n <- ncol(dnaData)
+            dnaData <- rowSums(dnaData, na.rm = TRUE)
+            dnaData <- dnaData / n
+        }
+        deadScore <- viability + 0.5 * dnaData
+    } else {
+        deadScore <- viability
+    }
+    
+    g <- initialGuess(deadScore[unclassified.ind], middleGroup = 1)
+    init <- rep(0, nrow(x))
+    init[unclassified.ind] <- g$label
+    
+    data.frame(Time = x[, "Time"], deadScore = deadScore, init = init)
+    
 }
