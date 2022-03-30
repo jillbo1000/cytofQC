@@ -55,10 +55,10 @@ svmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = T
   }
 
   Time <- x[, 1]
-  x <- x[, -1]
+  xs <- x[, -1]
 
   if (standardize) {
-    x <- as.data.frame(scale(x))
+    xs <- as.data.frame(scale(xs))
   }
   
   loss <- tolower(loss)
@@ -67,13 +67,13 @@ svmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = T
     loss <- "auc"
   }
   
-  svmTune <- EZtune::eztune(x = x[index, ], y = factor(init[index]),
+  svmTune <- EZtune::eztune(x = xs[index, ], y = factor(init[index]),
                             method = "svm", fast = 0.5, loss = loss)
-  svmfit <- e1071::svm(x = x[index, ], y = factor(init[index]),
+  svmfit <- e1071::svm(x = xs[index, ], y = factor(init[index]),
                        cost = svmTune$cost, gamma = svmTune$gamma,
                        kernel = "radial", probability = TRUE)
-  pred <- stats::predict(svmfit, x, probability = TRUE)
-  pred.pr <- attr(pred, "probabilities")[, colnames(attr(pred, "probabilities")) == "TRUE"]
+  pred <- stats::predict(svmfit, xs, probability = TRUE)
+  pred.pr <- attr(pred, "probabilities")[, colnames(attr(pred, "probabilities")) == "1"]
 
   labs <- labels
   labs[, type] <- pred.pr

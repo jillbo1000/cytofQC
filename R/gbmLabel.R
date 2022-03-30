@@ -55,10 +55,10 @@ gbmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = T
   }
 
   Time <- x[, 1]
-  x <- x[, -1]
-
+  xs <- x[, -1]
+  
   if (standardize) {
-    x <- as.data.frame(scale(x))
+      xs <- as.data.frame(scale(xs))
   }
   
   loss <- tolower(loss)
@@ -66,11 +66,13 @@ gbmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = T
     warning("Invalid loss specified. AUC used to tune model.")
     loss <- "auc"
   }
+  
+  init[init != 1] <- 0
 
-  gbmTune <- EZtune::eztune(x = x[index, ], y = factor(init[index]), method = "gbm",
+  gbmTune <- EZtune::eztune(x = xs[index, ], y = factor(init[index]), method = "gbm",
                     fast = 0.5, loss = loss)
 
-  dat <- data.frame(init = as.numeric(init[index]), x[index, ])
+  dat <- data.frame(init = as.numeric(init[index]), xs[index, ])
 
   gbmfit <- gbm::gbm(init ~ ., data = dat,
                      distribution = "bernoulli",
@@ -78,7 +80,9 @@ gbmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = T
                      interaction.depth = gbmTune$interaction.depth,
                      shrinkage = gbmTune$shrinkage,
                      n.minobsinnode = gbmTune$n.minobsinnode)
-  pred <- stats::predict(gbmfit, data.frame(x), type = "response")
+  
+  pred <- gbm::predict.gbm(gbmfit, data.frame(xs), n.trees =  gbmTune$n.trees, 
+                           type = "response")
 
   labs <- labels
   labs[, type] <- pred

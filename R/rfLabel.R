@@ -55,14 +55,14 @@ rfLabel <- function(x, labels, type, init, index, standardize = TRUE) {
   }
 
   Time <- x[, 1]
-  x <- x[, -1]
-
+  xs <- x[, -1]
+  
   if (standardize) {
-    x <- as.data.frame(scale(x))
+      xs <- as.data.frame(scale(xs))
   }
-
-  rffit <- randomForest::randomForest(x = x[index, ], y = factor(init[index]))
-  pred <- stats::predict(rffit, x, type = 'prob')[, 2]
+  
+  rffit <- randomForest::randomForest(x = xs[index, ], y = factor(init[index]))
+  pred <- stats::predict(rffit, xs, type = 'prob')[, 2]
 
   labs <- labels
   labs[, type] <- pred
