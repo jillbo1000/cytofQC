@@ -10,23 +10,23 @@ Encoding: UTF-8
 LazyData: true
 Imports:
   CATALYST,
+  dplyr,
+  e1071,
+  EZtune,
   flowCore,
-  RColorBrewer,
+  gbm,
   ggplot2,
+  ggpubr,
   gridExtra,
   hrbrthemes,
-  ggpubr,
-  EZtune,
-  dplyr,
-  tidyr,
-  BiocNeighbors,
-  e1071,
-  randomForest,
-  gbm,
+  matrixStats,
   mclust,
-  uwot, 
+  randomForest,
+  RColorBrewer,
   SingleCellExperiment, 
-  SummarizedExperiment
+  SummarizedExperiment,
+  tidyr,
+  uwot
 RoxygenNote: 7.1.2
 Suggests: 
     knitr,

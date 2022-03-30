@@ -132,12 +132,32 @@
 }
 
 
-#' @param x The score (ie. debris score, doublet score, etc.) to be used for predicting each cell's label (eg. "doublet" vs. "cell"). 
-#' @return A list with the following elements: \itemize{
-#' \item{\code{label}} {A vector of the same length as \code{x} providing the labels (\code{-1} for cells, \code{1} for non-cells, \code{0} for uncertain).}
-#' \item{\code{fit1}} {Summary of the 1-component (half Normal) model fit.}
-#' \item{\code{fit2}} {Summary of the 2-component (half Normal + Normal) model fit.}
-#' \item{\code{fit1}} {Summary of the 3-component (half Normal + 2 Normals) model fit.}}
+#' General preliminary classification.
+#'
+#' @param x The score (ie. debris score, doublet score, etc.) to be used for
+#'   predicting each event's label (eg. "doublet" vs. "cell").
+#' @param middleGroup numeric. When the optimal model (according to BIC) is the
+#'   3-component mixture model, this argument determines how to assign the
+#'   middle group. Possible values are \code{-1} for "cell", \code{0} (default)
+#'   for "indeterminate", and \code{1} for the event type of interest (eg.
+#'   "doublet").
+#' 
+#' @return A list with the following elements: \itemize{ \item{\code{label}} {A
+#'   vector of the same length as \code{x} providing the labels (\code{-1} for
+#'   cells, \code{1} for non-cells, \code{0} for uncertain).} \item{\code{fit1}}
+#'   {Summary of the 1-component (half Normal) model fit.} \item{\code{fit2}}
+#'   {Summary of the 2-component (half Normal + Normal) model fit.}
+#'   \item{\code{fit1}} {Summary of the 3-component (half Normal + 2 Normals)
+#'   model fit.}}
+#'   
+#' @examples
+#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
+#' x <- dataPrep(fname)
+#' labels <- qcDataFrame(x)
+#' doublets <- initialDoublet(x, labels = labels, score = 1)
+#' initialGuess(doublets$doubletScore)
+#' 
+#' @export
 initialGuess <- function(x, middleGroup = 0){
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]
