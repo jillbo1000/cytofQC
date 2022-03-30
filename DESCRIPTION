@@ -29,6 +29,7 @@ Imports:
   SummarizedExperiment
 RoxygenNote: 7.1.2
 Suggests: 
+    Cairo,
     knitr,
     rmarkdown,
     testthat
