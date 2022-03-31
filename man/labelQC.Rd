@@ -8,7 +8,7 @@ labelQC(
   x,
   model = "svm",
   types = c("bead", "doublet", "debris", "dead"),
-  nTrain = 4000,
+  nTrain = nTrain,
   loss = "auc"
 )
 }

@@ -28,6 +28,7 @@ generateReport <- function(tech, labels, outDir, sampName, ...){
     if(missing(labels)){
         labels <- labelQC(tech, ...)
     }
+    labels$label <- factor(labels$label, levels = c("cell", "GDPzero", "bead", "doublet", "debris"))
     out <- list(tech = tech, labels = labels)
     
     # temporarily store results on disk

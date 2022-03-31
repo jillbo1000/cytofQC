@@ -26,9 +26,9 @@ If successful, returns \code{TRUE} silently and generates the
 Generate a cytofQC report
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
+fname <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
 tech <- dataPrep(fname)
-labels <- labelQC(tech)
+labels <- labelQC(tech, types = c("bead", "doublet", "debris"), nTrain = 1000)
 tmp <- tempdir()
 generateReport(tech, labels, tmp, 'example')
 
