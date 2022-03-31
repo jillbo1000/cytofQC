@@ -157,7 +157,6 @@
 #' doublets <- initialDoublet(x, labels = labels, score = 1)
 #' initialGuess(doublets$doubletScore)
 #' 
-#' @export
 initialGuess <- function(x, middleGroup = 0){
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]

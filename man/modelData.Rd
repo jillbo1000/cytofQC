@@ -4,26 +4,25 @@
 \alias{modelData}
 \title{Returns indices for data to be used to create the final classification model.}
 \usage{
-modelData(labels, subset, init, n = 4000)
+modelData(labels, init, subset = NULL, n = 4000)
 }
 \arguments{
 \item{labels}{A \code{data.frame} created with \code{\link{qcDataFrame}}.}
 
-\item{subset}{A logical vector that indicates if an observation should
-be considered for inclusion in the returned indices. This vector may
-be computed with \code{\link{mismatch}}. If there are fewer TRUE values
-in \code{subset} than \code{n}, all of the unclassified data will
-be used as the subset.}
-
-\item{init}{A logical vector that contains the initial labeling for the
+\item{init}{A numeric vector that contains the initial labeling for the
 observations for the parameter of interest.}
+
+\item{subset}{A logical vector that indicates if an observation should
+be considered for inclusion in the returned indices. If there are fewer 
+TRUE values in \code{subset} than \code{n}, all of the unclassified data 
+will be used as the subset.}
 
 \item{n}{number of indices to return.}
 }
 \value{
-An integer vector that contains the indices of the datapoints that
+An integer vector that contains the indices of the events that
 should be included in the creation of the final classification model for
-the parameter of interest (bead, doublet, debris, dead).
+the parameter of interest (bead, debris, doublet, dead).
 }
 \description{
 Returns indices for data to be used to create the final classification model.
@@ -39,7 +38,6 @@ x <- dataPrep(fname)
 nn <- NN(x)
 labels <- qcDataFrame(x)
 beads <- beadID(x, labels = labels)
-mm <- mismatch(nn, init = beads$init, threshold = 1)
-index <- modelData(labels, subset = mm$Mismatch, init = beads$init, n = 4000)
+index <- modelData(labels, init = beads$init, n = 4000)
 
 }

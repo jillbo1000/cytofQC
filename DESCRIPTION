@@ -23,6 +23,7 @@ Imports:
   mclust,
   randomForest,
   RColorBrewer,
+  rmarkdown,
   SingleCellExperiment, 
   SummarizedExperiment,
   tidyr,
