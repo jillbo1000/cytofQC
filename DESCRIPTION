@@ -10,27 +10,24 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     CATALYST,
-    dplyr,
     e1071,
     EZtune,
-    flowCore,
     gbm,
     ggplot2,
-    ggpubr,
-    gridExtra,
     hrbrthemes,
     matrixStats,
     mclust,
     randomForest,
-    RColorBrewer,
     rmarkdown,
-    SingleCellExperiment, 
-    SummarizedExperiment,
-    tidyr,
-    uwot
+    SingleCellExperiment,
+    stats, 
+    SummarizedExperiment
 RoxygenNote: 7.1.2
 Suggests: 
+    ggpubr,
+    gridExtra,
     knitr,
-    rmarkdown,
-    testthat
+    RColorBrewer,
+    testthat,
+    uwot
 VignetteBuilder: knitr

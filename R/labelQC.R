@@ -6,10 +6,8 @@
 #' machine, or "rf" for a random forest.
 #' @param types Types of to model. Options are "bead", "doublet", 
 #' "debris", and "dead".
-#' @param nn Specifies if k-nearest neighbors ("knn") or mutual nearest
-#' neighbors ("mnn") for initial sample selection. 
-#' @param nnNum The number of nearest neighbors to compute in the 
-#' nearest neighbors matrix. 
+#' @param nTrain The (maximum) number of data points to use when training a
+#'   model to predict event types.
 #' @param loss Specifies the type of loss used to tune the model. Can 
 #' be either "auc" or "class". This argument is ignored if random
 #' forest is used as the model. 

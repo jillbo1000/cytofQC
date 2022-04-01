@@ -24,6 +24,8 @@ dataPrep(
 \item{event_length}{Character vector of the event length variable.}
 
 \item{viability}{Character vector of the permeability/viability markers.}
+
+\item{gaussian}{Character vector that contains the names of the Gaussian Discrimination Parameters.}
 }
 \value{
 A \code{matrix} that contains the time, beads, DNA measures, permeability

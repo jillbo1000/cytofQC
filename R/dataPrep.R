@@ -5,6 +5,7 @@
 #' @param dna Character vector that contains the names of the DNA markers.
 #' @param event_length Character vector of the event length variable.
 #' @param viability Character vector of the permeability/viability markers.
+#' @param gaussian Character vector that contains the names of the Gaussian Discrimination Parameters.
 #'
 #' @return A \code{matrix} that contains the time, beads, DNA measures, permeability
 #' (viability), event length, and the Guassian parameters of the CyTOF data.

@@ -7,6 +7,8 @@
 #' @param outDir The output directory (currently required).
 #' @param sampName Basename of the output HTML file (if not provided, same as
 #'   \code{outDir}).
+#' @param ... Additional arguments passed to \code{\link{labelQC}}, if
+#'   \code{labels} was not provided.
 #'
 #' @return If successful, returns \code{TRUE} silently and generates the
 #'   specified QC report.

@@ -23,8 +23,7 @@ test_that("basic functionality works", {
     tech <- dataPrep(f)
     expect_equal(nrow(tech), 30000)
     
-    expect_warning({ lab <- labelQC(tech, model = 'rf', nTrain = 500) },
-                   'Not enough dead')
+    suppressWarnings({ lab <- labelQC(tech, model = 'rf', nTrain = 500) })
     expect_equal(nrow(lab), 30000)
     expect_equal(names(lab), c('Time','label','bead','doublet','debris','dead'))
     expect_equivalent(table(lab$label)['GDPzero'], 1060)
