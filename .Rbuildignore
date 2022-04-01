@@ -3,3 +3,4 @@
 ^doc$
 ^Meta$
 ^\.github$
+^vignettes/workflow_cache/*$
