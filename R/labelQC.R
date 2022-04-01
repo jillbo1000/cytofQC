@@ -177,7 +177,7 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
                 types <- types[types != "doublet"]
                 warning("Not enough doublets or non-doublet observations in dataset to train a model with nTrain value specified. Doublets not fitted.")
             } else {
-                ind <- modelData(labels, subset = sure, init = doublets$init, n = nTrain)
+                ind <- modelData(labels, init = doublets$init, n = nTrain)
                 labels <- rfLabel(x, labels, type = "doublet", init = doublets$init, index = ind)
             }
         }
