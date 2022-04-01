@@ -30,11 +30,11 @@ A \code{ggplot2} histogram.
 Returns histogram for grouped data
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-nn <- NN(x)
-labels <- qcDataFrame(x)
-beads <- initialBead(x, labels = labels)
-cytofHist(beads$Bead1, beads$init)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+lab <- qcDataFrame(tech)
+beads <- initialBead(tech, labels = lab)
+lab <- labelQC(tech, nTrain = 20)
+cytofHist(beads$beadScore, lab$label)
 
 }

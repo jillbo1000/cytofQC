@@ -8,7 +8,7 @@ labelQC(
   x,
   model = "svm",
   types = c("bead", "doublet", "debris", "dead"),
-  nTrain = nTrain,
+  nTrain = 4000,
   loss = "auc"
 )
 }
@@ -52,8 +52,8 @@ have a label of 'bead' if an observation was classified as a bead prior to
 classifying the debris.
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-svmLabels <- labelQC(x, model = "svm", types = c("bead", "doublet", "debris"))
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+labelQC(tech)
 
 }

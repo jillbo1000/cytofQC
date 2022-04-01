@@ -53,9 +53,9 @@ not beads. The observations that are labeled 'GDPzero' are included in
 the output data, but the are removed from the data for bead designation.
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-labels <- qcDataFrame(x)
-dead <- initialDead(x, labels = labels)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+labels <- qcDataFrame(tech)
+initialDead(tech, labels)
 
 }

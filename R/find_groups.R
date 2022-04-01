@@ -10,9 +10,9 @@
 #' splits the data into groups that belong to each peak.
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#' x <- dataPrep(fname)
-#' find_groups(x$Bead1)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' find_groups(tech[,"Bead1"])
 #'
 #' @export
 find_groups <- function(x){

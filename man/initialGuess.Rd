@@ -29,10 +29,10 @@ A list with the following elements: \itemize{ \item{\code{label}} {A
 General preliminary classification.
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-labels <- qcDataFrame(x)
-doublets <- initialDoublet(x, labels = labels, score = 1)
-initialGuess(doublets$doubletScore)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+lab <- qcDataFrame(tech)
+doublets <- initialDoublet(tech, labels = lab, score = 1)
+cytofQC:::initialGuess(doublets$doubletScore)
 
 }

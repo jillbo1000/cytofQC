@@ -17,7 +17,10 @@
 .mixFit2 <- function(x, thresh = .01){
     # hidden factor, Z in [0,1], is prob observation X originated from left distn.
     # p1 := mean(Z)
-    Z <- as.numeric(x <= max(x)*2/3)
+    Z <- as.numeric(x <= max(x)*1/2)
+    if(sum(1-Z) < 3){
+        Z <- as.numeric(x < sort(x, decreasing = TRUE)[3])
+    }
     
     Z.old <- rep(1, length(x))
     p1 <- mean(Z)
@@ -67,6 +70,9 @@
     Z <- Z.old <- matrix(0, nrow = length(x), ncol = 3)
     Z[,1] <- as.numeric(x <= max(x)/3)
     Z[,3] <- as.numeric(x > max(x)*2/3)
+    if(sum(Z[,3]) < 3){
+        Z[,3] <- as.numeric(x >= sort(x, decreasing = TRUE)[3])
+    }
     Z[,2] <- 1 - Z[,1] - Z[,3]
     
     p <- colMeans(Z)
@@ -151,11 +157,11 @@
 #'   model fit.}}
 #'   
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#' x <- dataPrep(fname)
-#' labels <- qcDataFrame(x)
-#' doublets <- initialDoublet(x, labels = labels, score = 1)
-#' initialGuess(doublets$doubletScore)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' lab <- qcDataFrame(tech)
+#' doublets <- initialDoublet(tech, labels = lab, score = 1)
+#' cytofQC:::initialGuess(doublets$doubletScore)
 #' 
 initialGuess <- function(x, middleGroup = 0){
     d <- density(x[which(x > min(x))]) 

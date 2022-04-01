@@ -19,18 +19,9 @@
 #' the raw data are needed for some of the data labeling steps.
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#'
-#' # See names of variables
-#' require(CATALYST)
-#' require(SingleCellExperiment)
-#' sce <- prepData(fname)
-#' rownames(sce)
-#' rowData(sce)
-#' names(int_colData(sce))
-#'
-#' # Read in data
-#' tech <- dataPrep(fname)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' 
 #' @export
 dataPrep <- function(file.name,
                      time = "Time",

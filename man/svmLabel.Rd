@@ -55,13 +55,12 @@ label of 'bead' if an observation was classified as a bead prior to
 classifying the debris.
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-nn <- NN(x)
-labels <- qcDataFrame(x)
-beads <- initialBead(x, labels = labels)
-mm <- surematch(nn, init = beads$init, threshold = 1)
-index <- modelData(labels, subset = mm$match, init = beads$init, n = 4000)
-svmBeads <- svmLabel(x, labels, type = 'bead', init = beads$init, index = index)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+lab <- qcDataFrame(tech)
+beads <- initialBead(tech, lab)
+sure <- beads$init \%in\% c(-1,1)
+ind <- modelData(lab, subset = sure, init = beads$init)
+svmLabel(tech, lab, type = "bead", init = beads$init, index = ind)
 
 }

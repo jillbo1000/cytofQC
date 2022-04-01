@@ -51,10 +51,10 @@
 #' }
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#' x <- dataPrep(fname)
-#' labels <- qcDataFrame(x)
-#' debris <- initialDebris(x, labels = labels, score = 3)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' labels <- qcDataFrame(tech)
+#' initialDebris(tech, labels = labels, score = 3)
 #'
 #' @export
 initialDebris <- function(x, labels, score = 3, standardize = TRUE) {

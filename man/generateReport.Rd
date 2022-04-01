@@ -28,7 +28,7 @@ Generate a cytofQC report
 \examples{
 fname <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
 tech <- dataPrep(fname)
-labels <- labelQC(tech, types = c("bead", "doublet", "debris"), nTrain = 1000)
+labels <- labelQC(tech, nTrain = 1000)
 tmp <- tempdir()
 generateReport(tech, labels, tmp, 'example')
 
