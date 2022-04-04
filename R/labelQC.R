@@ -44,7 +44,7 @@ labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "de
     }
     
     labels <- qcDataFrame(x)
-    
+    17
     Time <- subset(x, select = c(get("Time")))
     x <- subset(x, select = -c(get("Time")))
     x <- as.data.frame(scale(x))
