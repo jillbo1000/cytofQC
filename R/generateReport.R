@@ -22,8 +22,9 @@
 #' 
 #' @importFrom rmarkdown render
 #' @export
-generateReport <- function(tech, labels, outDir, sampName, ...){
+generateReport <- function(tech, labels, outDir, sampName, runUMAP = TRUE, ...){
     stopifnot(dir.exists(outDir))
+    runUMAP <- as.logical(runUMAP)
     if(missing(sampName)){
         sampName <- basename(outDir)
     }
@@ -54,7 +55,8 @@ generateReport <- function(tech, labels, outDir, sampName, ...){
     rmarkdown::render(
         file2Knit,
         output_dir = outDir,
-        envir = new.env()
+        envir = new.env(),
+        params = list(runUMAP = runUMAP)
     )
     message("done")
     
