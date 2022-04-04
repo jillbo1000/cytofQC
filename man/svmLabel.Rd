@@ -40,28 +40,26 @@ Returns the final label assignments for a parameter using a support vector
 machine
 }
 \details{
-\code{svmLabel} uses a support vector machine to compute the final labels
-for the specified parameter type (bead, doublet, debris, or dead). The
-model is computed using only the data specified in the index argument. The svm
-is tuned using \code{\link{EZtune}} and then predicted values are computed
-for all of the observations in \code{x}. If the predicted probability for
-the label type is greater than 0.5, the label is changed to the specified
-type. However, if an observation already has a label other than 'cell'
-in the \code{labels$label} variable, it will not be changed. The predicted
-probabilities for all of the observations is stored in the variable
-associated with that type for further analysis. Thus, it is possible
-to have a probability greater than 0.5 for 'debris' but still have a
-label of 'bead' if an observation was classified as a bead prior to
-classifying the debris.
+\code{svmLabel} uses a support vector machine to compute the final
+labels for the specified parameter type (bead, doublet, debris, or dead). The
+model is computed using only the data specified in the index argument. The
+svm is tuned using \code{\link[EZtune]{eztune}} and then predicted values are
+computed for all of the observations in \code{x}. If the predicted
+probability for the label type is greater than 0.5, the label is changed to
+the specified type. However, if an observation already has a label other than
+'cell' in the \code{labels$label} variable, it will not be changed. The
+predicted probabilities for all of the observations is stored in the variable
+associated with that type for further analysis. Thus, it is possible to have
+a probability greater than 0.5 for 'debris' but still have a label of 'bead'
+if an observation was classified as a bead prior to classifying the debris.
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-nn <- NN(x)
-labels <- qcDataFrame(x)
-beads <- initialBead(x, labels = labels)
-mm <- surematch(nn, init = beads$init, threshold = 1)
-index <- modelData(labels, subset = mm$match, init = beads$init, n = 4000)
-svmBeads <- svmLabel(x, labels, type = 'bead', init = beads$init, index = index)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+lab <- qcDataFrame(tech)
+beads <- initialBead(tech, lab)
+sure <- beads$init \%in\% c(-1,1)
+ind <- modelData(lab, subset = sure, init = beads$init)
+svmLabel(tech, lab, type = "bead", init = beads$init, index = ind)
 
 }

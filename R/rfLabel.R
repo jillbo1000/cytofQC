@@ -37,14 +37,13 @@
 #' classifying the debris.
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#' x <- dataPrep(fname)
-#' nn <- NN(x)
-#' labels <- qcDataFrame(x)
-#' beads <- initialBead(x, labels = labels)
-#' sure <- mismatch(nn, init = beads$init, threshold = 0)
-#' index <- modelData(labels, subset = sure$Mismatch, init = beads$init, n = 4000)
-#' rfBeads <- rfLabel(x, labels, type = 'bead', init = beads$init, index = index)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' lab <- qcDataFrame(tech)
+#' beads <- initialBead(tech, lab)
+#' sure <- beads$init %in% c(-1,1)
+#' ind <- modelData(lab, subset = sure, init = beads$init)
+#' rfLabel(tech, lab, type = "bead", init = beads$init, index = ind)
 #'
 #' @export
 rfLabel <- function(x, labels, type, init, index, standardize = TRUE) {

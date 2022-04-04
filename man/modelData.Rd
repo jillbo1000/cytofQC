@@ -33,11 +33,11 @@ create a model that can be used to classify the observations with
 regard to the parameter of interest (bead, doublet, debris, dead).
 }
 \examples{
-fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-x <- dataPrep(fname)
-nn <- NN(x)
-labels <- qcDataFrame(x)
-beads <- beadID(x, labels = labels)
-index <- modelData(labels, init = beads$init, n = 4000)
+data("raw_data", package = "CATALYST")
+tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+lab <- qcDataFrame(tech)
+beads <- initialBead(tech, lab)
+sure <- beads$init \%in\% c(-1,1)
+modelData(lab, subset = sure, init = beads$init)
 
 }

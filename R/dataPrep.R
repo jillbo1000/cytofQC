@@ -5,6 +5,7 @@
 #' @param dna Character vector that contains the names of the DNA markers.
 #' @param event_length Character vector of the event length variable.
 #' @param viability Character vector of the permeability/viability markers.
+#' @param gaussian Character vector that contains the names of the Gaussian Discrimination Parameters.
 #'
 #' @return A \code{matrix} that contains the time, beads, DNA measures, permeability
 #' (viability), event length, and the Guassian parameters of the CyTOF data.
@@ -19,18 +20,9 @@
 #' the raw data are needed for some of the data labeling steps.
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#'
-#' # See names of variables
-#' require(CATALYST)
-#' require(SingleCellExperiment)
-#' sce <- prepData(fname)
-#' rownames(sce)
-#' rowData(sce)
-#' names(int_colData(sce))
-#'
-#' # Read in data
-#' tech <- dataPrep(fname)
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' 
 #' @export
 dataPrep <- function(file.name,
                      time = "Time",

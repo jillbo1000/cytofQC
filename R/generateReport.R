@@ -7,6 +7,8 @@
 #' @param outDir The output directory (currently required).
 #' @param sampName Basename of the output HTML file (if not provided, same as
 #'   \code{outDir}).
+#' @param ... Additional arguments passed to \code{\link{labelQC}}, if
+#'   \code{labels} was not provided.
 #'
 #' @return If successful, returns \code{TRUE} silently and generates the
 #'   specified QC report.
@@ -14,14 +16,15 @@
 #' @examples
 #' fname <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
 #' tech <- dataPrep(fname)
-#' labels <- labelQC(tech, types = c("bead", "doublet", "debris"), nTrain = 1000)
+#' labels <- labelQC(tech, nTrain = 1000)
 #' tmp <- tempdir()
 #' generateReport(tech, labels, tmp, 'example')
 #' 
 #' @importFrom rmarkdown render
 #' @export
-generateReport <- function(tech, labels, outDir, sampName, ...){
+generateReport <- function(tech, labels, outDir, sampName, runUMAP = TRUE, ...){
     stopifnot(dir.exists(outDir))
+    runUMAP <- as.logical(runUMAP)
     if(missing(sampName)){
         sampName <- basename(outDir)
     }
@@ -52,7 +55,8 @@ generateReport <- function(tech, labels, outDir, sampName, ...){
     rmarkdown::render(
         file2Knit,
         output_dir = outDir,
-        envir = new.env()
+        envir = new.env(),
+        params = list(runUMAP = runUMAP)
     )
     message("done")
     

@@ -6,10 +6,8 @@
 #' machine, or "rf" for a random forest.
 #' @param types Types of to model. Options are "bead", "doublet", 
 #' "debris", and "dead".
-#' @param nn Specifies if k-nearest neighbors ("knn") or mutual nearest
-#' neighbors ("mnn") for initial sample selection. 
-#' @param nnNum The number of nearest neighbors to compute in the 
-#' nearest neighbors matrix. 
+#' @param nTrain The (maximum) number of data points to use when training a
+#'   model to predict event types.
 #' @param loss Specifies the type of loss used to tune the model. Can 
 #' be either "auc" or "class". This argument is ignored if random
 #' forest is used as the model. 
@@ -30,14 +28,14 @@
 #' classifying the debris.
 #'
 #' @examples
-#' fname <- "../data/FlowRepository_FR-FCM-Z29V_files/REP_1_deid.fcs"
-#' x <- dataPrep(fname)
-#' svmLabels <- labelQC(x, model = "svm", types = c("bead", "doublet", "debris"))
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' labelQC(tech)
 #'
 #' @export
 labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "dead"), 
                     nTrain = 4000, loss = "auc") {
-    
+
     types <- tolower(types)
     if (length(setdiff(types, c("bead", "doublet", "debris", "dead")))) {
         stop("types must be either 'bead', 'doublet', 'debris', or 'dead'.")
