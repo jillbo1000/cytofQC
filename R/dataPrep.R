@@ -23,6 +23,7 @@
 #' data("raw_data", package = "CATALYST")
 #' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' 
+#' @importFrom CATALYST prepData
 #' @export
 dataPrep <- function(file.name,
                      time = "Time",
