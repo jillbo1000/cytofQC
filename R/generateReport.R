@@ -7,6 +7,9 @@
 #' @param outDir The output directory (currently required).
 #' @param sampName Basename of the output HTML file (if not provided, same as
 #'   \code{outDir}).
+#' @param runUMAP Logical value indicating whether or not to include a UMAP plot
+#'   in the report. This plot can be beneficial for diagnostic purposes, but is
+#'   time-consuming to generate.
 #' @param ... Additional arguments passed to \code{\link{labelQC}}, if
 #'   \code{labels} was not provided.
 #'
