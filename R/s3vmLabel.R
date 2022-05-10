@@ -1,0 +1,90 @@
+#' Returns the final label assignments for a parameter using a semi-supervised
+#' support vector machine
+#' 
+#' @param x A \code{matrix} created with \code{\link{dataPrep}}.
+#' @param labels A \code{data.frame} created with \code{\link{qcDataFrame}}.
+#' @param type Identifies the type of label that is being modeled. Must
+#' be 'bead', 'doublet', 'debris', or 'dead'.
+#' @param init A logical vector that contains the initial labeling for the
+#' cells for the cell type of interest.
+#' @param index A vector containing the indices of the data that should be
+#' used to compute the model. These should be obtained from
+#' \code{\link{modelData}}.
+#' @param loss Specifies the type of loss used to tune the GBM. Can be either
+#' "auc" or "class". 
+#' @param standardize Indicates if the data should be standardized. Because
+#' the data are on different scales, it should be standardized for
+#' this analysis.
+#'
+#' @return An updated \code{label} data.frame is returned with the labels
+#' for the parameter of interest (bead, doublet, debris, or dead) added to
+#' the \code{label} variable and the probabilities for the column
+#' pertaining to the parameter filled in.
+#'
+#' @details \code{s3vmLabel} uses a semi-supervised support vector machine to
+#'   compute the final labels for the specified parameter type (bead, doublet,
+#'   debris, or dead). The model is initially computed using only the data
+#'   specified in the index argument. Events are iteratively added to this set
+#'   when the updated SVM predicts a label with high confidence. Then predicted
+#'   values are computed for all of the observations in \code{x}. If the
+#'   predicted probability for the label type is greater than 0.5, the label is
+#'   changed to the specified type. However, if an observation already has a
+#'   label other than 'cell' in the \code{labels$label} variable, it will not be
+#'   changed. The predicted probabilities for all of the observations is stored
+#'   in the variable associated with that type for further analysis. Thus, it is
+#'   possible to have a probability greater than 0.5 for 'debris' but still have
+#'   a label of 'bead' if an observation was classified as a bead prior to
+#'   classifying the debris.
+#'
+#' @examples
+#' data("raw_data", package = "CATALYST")
+#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' lab <- qcDataFrame(tech)
+#' beads <- initialBead(tech, lab)
+#' sure <- beads$init %in% c(-1,1)
+#' ind <- modelData(lab, subset = sure, init = beads$init)
+#' svmLabel(tech, lab, type = "bead", init = beads$init, index = ind)
+#'
+#' @export
+s3vmLabel <- function(x, labels, type, init, index, loss = "auc", standardize = TRUE) {
+    
+    type <- tolower(type)
+    if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
+        stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
+    }
+    
+    Time <- x[, 1]
+    xs <- x[, -1]
+    
+    if (standardize) {
+        xs <- as.data.frame(scale(xs))
+    }
+    
+    loss <- tolower(loss)
+    if (loss != "auc" & loss != "class") {
+        warning("Invalid loss specified. AUC used to tune model.")
+        loss <- "auc"
+    }
+    
+    y.s3vm <- rep(NA, length(init))
+    y.s3vm[index] <- init[index]
+    s3vmfit <- selfTraining(x = xs, y = factor(y.s3vm), 
+                            x.inst = TRUE, learner = svm,
+                            learner.pars = list(kernel ="linear", 
+                                                scale = FALSE, 
+                                                probability = TRUE),
+                            pred = function(m, x){
+                                attr(predict(m, x, probability = TRUE), 
+                                     "probabilities")
+                            })
+    pred <- stats::predict(s3vmfit$model, xs, probability = TRUE)
+    pred.pr <- attr(pred, "probabilities")[, colnames(attr(pred, "probabilities")) == "1"]
+    
+    labs <- labels
+    labs[, type] <- pred.pr
+    labs$label[labs$label == "cell"] <- ifelse(round(pred.pr[labs$label == "cell"]),
+                                               type, 'cell')
+    
+    labs
+    
+}
