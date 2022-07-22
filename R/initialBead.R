@@ -1,65 +1,57 @@
 #' Preliminary bead classification.
 #'
-#' @param x A \code{matrix} created with \code{\link{dataPrep}}. Note that the
-#' data should not be standardized. All of the bead channels should be
-#' non-negative.
-#' @param labels A \code{data.frame} created with \code{\link{qcDataFrame}}.
+#' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
 #'
-#' @return A \code{data.frame} that contains the bead designation for each
-#' bead channel and the overall bead designation for the observation. The
-#' first column is the \code{Time} variable that helps ensure that all
-#' of the observations can be correctly matched during all stages labeling.
-#' The last column is \code{init} which is TRUE if the observation is
-#' determined to be a bead and FALSE if the observation is not a bead during
-#' this initial classification.
+#' @return A \code{SingleCellExperiment} that contains the bead score and the 
+#' bead designation for each event. This information is stored in the 
+#' \code{score} and \code{initial} objects in the colData for the 
+#' \code{SingleCellExperiment}. 
 #'
 #' @details
 #' The beads are typically the first cell classification that is done. The
-#' different cell types are labeled iteratively so the \code{labels}
-#' data.frame should contain all of the labels and probabilities computed
-#' up to this point. Thus, if the beads were not the first cell type that
-#' was classified, the \code{labels} data.frame must have the labels and
-#' probabilities computed prior to classifying the beads. Also note that
-#' this matrix will not be changed during this state. This function
-#' creates the most preliminary bead labels and that information is needed
-#' to obtain the final bead labels. The \code{labels} data.frame is needed
-#' to determine which cells have and have not been labeled prior to this
-#' step.
-#'
+#' different event types are labeled iteratively so the \code{labels}
+#' vector in the colData will contain all of the labels and 
+#' probabilities computed up to this point. Only events that 
+#' have a "cell" label can be assigned an initial event classification of
+#' "bead". This function computes a score that assesses how much an event
+#' looks like a bead and then fits a mixture model to assign each event 
+#' a class of 1 for a bead, -1 for an event that is not a bead, or 0 
+#' for undetermined or previously assigned to a different event type. 
+#' The score is recorded in the \code{score} object in the colData and 
+#' the initial classification is recorded in the \code{initial} part of 
+#' the colData. 
+#' 
 #' Each bead channel should classify into two fairly clear groups where one
-#' is the beads and the other is non-beads. The function \code{find_groups}
-#' is used to determine the groups. The members of the group with the
-#' largest mean are classified as beads and the rest are classified as
-#' not beads. The observations that are labeled 'GDPzero' are included in
-#' the output data, but the are removed from the data for bead designation.
+#' is the beads and the other is non-beads. A histogram of the bead score
+#' should show a clear, small peak that represents the beads.
 #'
 #' @examples
 #' data("raw_data", package = "CATALYST")
-#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-#' labels <- qcDataFrame(tech)
-#' initialBead(tech, labels)
+#' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' sce <- initialBead(sce)
+#' head(sce$scores)
+#' head(sce$initial)
 #'
 #' @export
-initialBead <- function(x, labels) {
-
-  unclassified.ind <- which(labels$label == "cell")
-  bead_channels <- grep("Bead", colnames(x))
-
-  if (min(bead_channels) < 0) {
-    stop("Bead data should all be non-negative")
-  }
-  
-  if (length(bead_channels) > 1) {
-    b <- rowSums(x[, bead_channels], na.rm = TRUE)
-  } else if (length(bead_channels) == 1){
-    b <- x[, bead_channels]
-  } else {
-    stop("No bead channels in data")
-  }
-  
-  g <- initialGuess(b[unclassified.ind], middleGroup = 0)
-  init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
-  
-  data.frame(Time = x[, "Time"], beadScore = b, init = init)
+initialBead <- function(x) {
+    
+    unclassified.ind <- which(x$label == "cell")
+    bead_channels <- grep("Bead", colnames(x$tech))
+    
+    if (min(as.matrix(x$tech[, bead_channels]), na.rm = TRUE) < 0) {
+        stop("Bead data should all be non-negative")
+    }
+    
+    if (length(bead_channels) > 1) {
+        x$scores[, "beadScore"] <- rowSums(as.matrix(x$tech[, bead_channels]), na.rm = FALSE)
+    } else if (length(bead_channels) == 1){
+        x$scores[, "beadScore"] <- x$tech[, bead_channels]
+    } else {
+        stop("No bead channels in data")
+    }
+    
+    g <- initialGuess(x$scores$beadScore[unclassified.ind], middleGroup = 0)
+    x$initial[unclassified.ind, "beadInitial"] <- g$label
+    
+    x
 }

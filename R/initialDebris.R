@@ -1,46 +1,37 @@
 #' Preliminary debris classification.
 #'
-#' @import mclust
+#' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
+#' @param score A value of 1, 2, or 3 that specifies the debris score that 
+#' should be calculated. See details for information on the debris score. 
+#' @param standardize A value of TRUE will compute the debris score 
+#' using standardized data. The raw data will be used to compute the score 
+#' if FALSE. It is highly recommended that the data are standardized prior
+#' to computing the score because the variables are on different scales.
 #'
-#' @param x A \code{matrix} created with \code{\link{dataPrep}}.
-#' @param labels A \code{data.frame} created with \code{\link{qcDataFrame}}.
-#' @param score Integer that identifies the debris score that should be used.
-#' See \code{Details} for a description of the different scores that can be
-#' used.
-#' @param standardize Indicates if the data should be standardized. Because
-#' the data are on different scales, it should be standardized for
-#' this analysis.
-#'
-#' @return A \code{data.frame} that contains the debris score and the
-#' overall debris designation for the observation. The variables included
-#' the \code{data.frame} are:
-#' \item{Time}{The time stamp from the original data. It is needed to ensure
-#' that the labels can be matched with the original cell data.}
-#' \item{debrisScore}{The computed debris score.}
-#' \item{debrisGroup}{The group that the score was assigned to. This is
-#' may be different than the label because the debris often cluster into
-#' two groups.}
-#' \item{init}{TRUE if the observation is determined to be debris and
-#' FALSE if the observation is not debris during this initial
-#' classification.}
+#' @return A \code{SingleCellExperiment} that contains the debris score and the 
+#' debris designation for each event. This information is stored in the 
+#' \code{score} and \code{initial} objects in the colData for the 
+#' \code{SingleCellExperiment}. 
 #'
 #' @details
 #' The beads are typically the first cell classification that is done
-#' because their identification is straightforward. Doublets and
-#' debris are more difficult to identify so they should be classified
-#' after the beads.
+#' because their identification is straightforward. Debris is typically
+#' classified after the beads. This is because classifying debris
+#' is more straightforward than doublets and labeling them before the
+#' doublets aids in doublet classification. 
 #'
-#' The different cell types are labeled iteratively so the \code{labels}
-#' data.frame should contain all of the labels and probabilities computed
-#' up to this point. Thus, if the debris were not the first cell type that
-#' was classified, the \code{labels} data.frame must have the labels and
-#' probabilities computed prior to classifying the debris. Also note that
-#' this matrix will not be changed during this state. This function
-#' creates the initial debris labels and that information is needed
-#' to obtain the final debris labels. The \code{labels} data.frame is needed
-#' to determine which cells have and have not been labeled prior to this
-#' step.
-#'
+#' Different event types are labeled iteratively so the \code{labels}
+#' vector in the colData will contain all of the labels and 
+#' probabilities computed up to this point. Only events that 
+#' have a "cell" label can be assigned an initial event classification of
+#' "debris". This function computes a score that assesses how much an event
+#' looks like debris and then fits a mixture model to assign each event 
+#' a class of 1 for debris, -1 for an event that is not debris, or 0 
+#' for undetermined or previously assigned to a different event type. 
+#' The score is recorded in the \code{score} object in the colData and 
+#' the initial classification is recorded in the \code{initial} part of 
+#' the colData. 
+#' 
 #' Several options are available for computing the debris score. The
 #' following list shows the debris score calculations. Each one can
 #' be selected by its number on the following list:
@@ -52,37 +43,39 @@
 #'
 #' @examples
 #' data("raw_data", package = "CATALYST")
-#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-#' labels <- qcDataFrame(tech)
-#' initialDebris(tech, labels = labels, score = 3)
+#' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' sce <- initialBead(sce)
+#' sce <- initialDebris(sce)
+#' head(sce$scores)
+#' head(sce$initial)
 #'
 #' @export
-initialDebris <- function(x, labels, score = 3, standardize = TRUE) {
-
-  if (standardize) {
-    xs <- scale(x[, -1])
-  } else {
-    xs <- x
-  }
-  
-  unclassified.ind <- which(labels$label == "cell")
-  cell <- data.frame(xs[unclassified.ind, ])
-  
-  if (score == 1) {
-    debrisScore <- 1 - (x[, "DNA1"] + x[, "DNA2"] + x[, "Event_length"] -
-                          x[, "Center"] - x[, "Width"] + x[, "Offset"])
-  } else if (score == 2) {
-    debrisScore <- x[, "Residual"] + x[, "Offset"] - 2.0 * x[, "DNA1"] -
-      2.0 * x[, "DNA2"] - x[, "Event_length"] - x[, "Center"] - 0.5 * x[, "Width"]
-  } else if (score == 3) {
-    debrisScore <- 1 - (x[, "DNA1"] + x[, "DNA2"] + x[, "Event_length"])
-  } else {
-    stop("Invalid score selection")
-  }
-  
-  g <- initialGuess(debrisScore[unclassified.ind], middleGroup = 1)
-  init <- rep(0, nrow(x))
-  init[unclassified.ind] <- g$label
-  
-  data.frame(Time = x[, 1], debrisScore = debrisScore, init = init)
+initialDebris <- function(x, score = 1, standardize = TRUE) {
+    
+    if (standardize) {
+        xs <- scale(x$tech)
+    } else {
+        xs <- x$tech
+    }
+    
+    unclassified.ind <- which(x$label == "cell")
+    
+    if (score == 1) {
+        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
+                                xs[, "Event_length"] - xs[, "Center"] - 
+                                xs[, "Width"] + xs[, "Offset"])
+    } else if (score == 2) {
+        x$scores[, "debrisScore"] <- xs[, "Residual"] + xs[, "Offset"] - 2.0 * xs[, "DNA1"] -
+            2.0 * xs[, "DNA2"] - xs[, "Event_length"] - xs[, "Center"] - 
+            0.5 * xs[, "Width"]
+    } else if (score == 3) {
+        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + xs[, "Event_length"])
+    } else {
+        stop("Invalid score selection. Must be 1, 2, or 3.")
+    }
+    
+    g <- initialGuess(x$scores$debrisScore[unclassified.ind], middleGroup = 1)
+    x$initial$debrisInitial[unclassified.ind] <- g$label
+    
+    x
 }

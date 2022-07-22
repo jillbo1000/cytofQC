@@ -30,12 +30,14 @@ library(ggplot2)
 # Quick Start
 ## Read in data and create initial dataset
 
-The function `dataPrep` read in the data and formats a `data.frame` that contains all of the QC variables. The variables are renamed so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the `log1p` function. The output is a `matrix`. 
+The function `readCytof` read in the data and formats a `SingleCellExperiment` that contains all of the QC variables and place holders for the labels, event scores, initial classification, and event probabilities. The variables are renamed in the tech dataset so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the `log1p` function. The output is a `matrix`. 
 
 ```{r}
 f <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
-tech <- dataPrep(f)
-head(tech)
+x <- readCytof(f)
+head(x$tech)
+head(x$scores)
+head(x$initial)
 ```
 
 ## Use labelQC to obtain labels for each obsevation

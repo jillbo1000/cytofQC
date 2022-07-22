@@ -7,9 +7,10 @@
 cytofHist(x, group, type = "count", na.rm = FALSE, title = NULL)
 }
 \arguments{
-\item{x}{The vector of values that will be plotted.}
+\item{x}{Numeric vector of values that will be plotted.}
 
-\item{group}{A vector that contains the grouping variable.}
+\item{group}{A vector that contains the grouping variable. It can be a 
+numeric, factor, or character vector.}
 
 \item{type}{Either "count" or "density". The "count" selection
 keeps the groups on the same scale. The "density" option will
@@ -31,10 +32,8 @@ Returns histogram for grouped data
 }
 \examples{
 data("raw_data", package = "CATALYST")
-tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-lab <- qcDataFrame(tech)
-beads <- initialBead(tech, labels = lab)
-lab <- labelQC(tech, nTrain = 20)
-cytofHist(beads$beadScore, lab$label)
+sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+sce <- labelQC(sce)
+cytofHist(sce$scores$beadScore, sce$label)
 
 }

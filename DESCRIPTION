@@ -10,6 +10,7 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     CATALYST,
+    flowCore,
     e1071,
     EZtune,
     gbm,
@@ -21,8 +22,9 @@ Imports:
     rmarkdown,
     SingleCellExperiment,
     stats, 
-    SummarizedExperiment
-RoxygenNote: 7.1.2
+    SummarizedExperiment,
+    ssc
+RoxygenNote: 7.2.1
 Suggests: 
     ggpubr,
     gridExtra,

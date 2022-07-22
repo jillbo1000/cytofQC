@@ -13,7 +13,9 @@ labelQC(
 )
 }
 \arguments{
-\item{x}{A \code{matrix} created with \code{\link{dataPrep}}.}
+\item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}} 
+with the scores and initial columns filled out for the event type of 
+interest.}
 
 \item{model}{Type of model to use to do the labeling. Options are 
 "svm" for a support vector machine, "gbm" for a gradient boosting
@@ -25,15 +27,15 @@ machine, or "rf" for a random forest.}
 \item{nTrain}{The (maximum) number of data points to use when training a
 model to predict event types.}
 
-\item{loss}{Specifies the type of loss used to tune the model. Can 
-be either "auc" or "class". This argument is ignored if random
-forest is used as the model.}
+\item{loss}{Specifies the type of loss used to tune the GBM. Can be either
+"auc" for the area under the curve or "class" for classification error. 
+This argument is ignored if random forest is used as the model.}
 }
 \value{
-A \code{label} data.frame is returned with the labels
-for the parameters of listed in \code{types} (bead, doublet, debris, 
+A \code{SingleCellExperiment} data.frame is returned with the 
+labels for the parameters of listed in \code{types} (bead, doublet, debris, 
 or dead) added to the \code{label} variable and the probabilities for 
-each of the columns pertaining to the parameter listed in \code{types}.
+each of the columns pertaining to the parameters listed in \code{probs}.
 }
 \description{
 Returns the final label assignments the specified parameters
@@ -50,7 +52,7 @@ classifying the debris.
 }
 \examples{
 data("raw_data", package = "CATALYST")
-tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-labelQC(tech)
+sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+sce <- labelQC(sce)
 
 }

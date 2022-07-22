@@ -4,40 +4,43 @@
 \alias{modelData}
 \title{Returns indices for data to be used to create the final classification model.}
 \usage{
-modelData(labels, init, subset = NULL, n = 4000)
+modelData(x, type = c("bead", "doublet", "debris", "dead"), n = 4000)
 }
 \arguments{
-\item{labels}{A \code{data.frame} created with \code{\link{qcDataFrame}}.}
+\item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}} 
+with the scores and initial columns filled out for the event type of 
+interest.}
 
-\item{init}{A numeric vector that contains the initial labeling for the
-observations for the parameter of interest.}
-
-\item{subset}{A logical vector that indicates if an observation should
-be considered for inclusion in the returned indices. If there are fewer 
-TRUE values in \code{subset} than \code{n}, all of the unclassified data 
-will be used as the subset.}
+\item{type}{Identifies the type of label that is being modeled. Must
+be 'bead', 'doublet', 'debris', or 'dead'.}
 
 \item{n}{number of indices to return.}
 }
 \value{
 An integer vector that contains the indices of the events that
 should be included in the creation of the final classification model for
-the parameter of interest (bead, debris, doublet, dead).
+the event type of interest (bead, debris, doublet, dead).
 }
 \description{
 Returns indices for data to be used to create the final classification model.
 }
 \details{
-The indices that are returned by \code{modelData} should be used to
+The indices that are returned by \code{modelData} are be used to
 create a model that can be used to classify the observations with
 regard to the parameter of interest (bead, doublet, debris, dead).
+It is used as part of \code{gbmLabel}, \code{rfLabel}, 
+\code{svmLable}, and \code{labelQC}. The function \code{mocelData} 
+uses the score and the function \code{initialGuess} to randomly select
+a set of data points that we are confident are of the event type and 
+not of the selected event type that can be used to train the data. Only
+points that are labeled as \code{-1} and \code{1} are considered for the 
+training dataset. The selected dataset is balance with a fairly equal 
+number of points from each group.
 }
 \examples{
 data("raw_data", package = "CATALYST")
-tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-lab <- qcDataFrame(tech)
-beads <- initialBead(tech, lab)
-sure <- beads$init \%in\% c(-1,1)
-modelData(lab, subset = sure, init = beads$init)
+sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+sce <- initialBead(sce)
+train <- modelData(sce, type = "bead", n = 4000)
 
 }

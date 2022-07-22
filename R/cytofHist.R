@@ -1,7 +1,8 @@
 #' Returns histogram for grouped data
 #'
-#' @param x The vector of values that will be plotted.
-#' @param group A vector that contains the grouping variable.
+#' @param x Numeric vector of values that will be plotted.
+#' @param group A vector that contains the grouping variable. It can be a 
+#' numeric, factor, or character vector.
 #' @param type Either "count" or "density". The "count" selection
 #' keeps the groups on the same scale. The "density" option will
 #' over emphasize the group with the fewest observations. This
@@ -16,11 +17,9 @@
 #'
 #' @examples
 #' data("raw_data", package = "CATALYST")
-#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-#' lab <- qcDataFrame(tech)
-#' beads <- initialBead(tech, labels = lab)
-#' lab <- labelQC(tech, nTrain = 20)
-#' cytofHist(beads$beadScore, lab$label)
+#' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+#' sce <- labelQC(sce)
+#' cytofHist(sce$scores$beadScore, sce$label)
 #'
 #' @export
 cytofHist <- function(x, group, type = "count", na.rm = FALSE, title = NULL) {
@@ -32,7 +31,7 @@ cytofHist <- function(x, group, type = "count", na.rm = FALSE, title = NULL) {
     tmp <- tmp[!is.na(tmp$group), ]
   }
 
-  cols <- cols[1:length(unique(tmp$group))]
+  cols <- cols[seq_along(unique(tmp$group))]
 
   g <- ggplot2::ggplot(tmp, ggplot2::aes(x = x, fill = factor(group)))
 

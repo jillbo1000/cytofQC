@@ -4,51 +4,46 @@
 \alias{initialDoublet}
 \title{Preliminary doublet classification.}
 \usage{
-initialDoublet(x, labels, score = 3, standardize = TRUE)
+initialDoublet(x, score = 1, standardize = TRUE)
 }
 \arguments{
-\item{x}{A \code{matrix} created with \code{\link{dataPrep}}.}
+\item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}}.}
 
-\item{labels}{A \code{data.frame} created with \code{\link{qcDataFrame}}.}
+\item{score}{A value of 1, 2, or 3 that specifies the doublet score that 
+should be calculated. See details for information on the doublet score.}
 
-\item{score}{Integer that identifies the doublet score that should be used.
-See \code{Details} for a description of the different scores that can be
-used.}
-
-\item{standardize}{Indicates if the data should be standardized. Because
-the data are on different scales, it should be standardized for
-this analysis.}
+\item{standardize}{A value of TRUE will use compute the doublet score 
+using standardized data. The raw data will be used to compute the score 
+if FALSE. It is highly recommended that the data are standardized prior
+to computing the score because the variables are on different scales.}
 }
 \value{
-A \code{data.frame} that contains the doublet score and the
-overall doublet designation for the observation. The variables included
-the \code{data.frame} are:
-\item{Time}{The time stamp from the original data. It is needed to ensure
-that the labels can be matched with the original cell data.}
-\item{doubletScore}{The computed doublet score.}
-\item{init}{TRUE if the observation is determined to be a doublet and
-FALSE if the observation is not a doublet during this initial
-classification.}
+A \code{SingleCellExperiment} that contains the doublet score and 
+the doublet designation for each event. This information is stored in the 
+\code{score} and \code{initial} objects in the colData for the 
+\code{SingleCellExperiment}.
 }
 \description{
 Preliminary doublet classification.
 }
 \details{
 The beads are typically the first cell classification that is done
-because their identification is straightforward. Doublets and
-debris are more difficult to identify so they should be classified
-after the beads.
+because their identification is straightforward. Debris is typically
+classified after the beads. This is because classifying debris
+is more straightforward than doublets and labeling them before the
+doublets aids in doublet classification. 
 
-The different cell types are labeled iteratively so the \code{labels}
-data.frame should contain all of the labels and probabilities computed
-up to this point. Thus, if the doublets were not the first cell type that
-was classified, the \code{labels} data.frame must have the labels and
-probabilities computed prior to classifying the doublets. Also note that
-this matrix will not be changed during this state. This function
-creates the initial doublet labels and that information is needed
-to obtain the final doublet labels. The \code{labels} data.frame is needed
-to determine which cells have and have not been labeled prior to this
-step.
+Different event types are labeled iteratively so the \code{labels}
+vector in the colData will contain all of the labels and 
+probabilities computed up to this point. Only events that 
+have a "cell" label can be assigned an initial event classification of
+"doublet". This function computes a score that assesses how much an event
+looks like a doublet and then fits a mixture model to assign each event 
+a class of 1 for doublet, -1 for an event that is not a doublet, or 0 
+for undetermined or previously assigned to a different event type. 
+The score is recorded in the \code{score} object in the colData and 
+the initial classification is recorded in the \code{initial} part of 
+the colData. 
 
 Several options are available for computing the doublet score. The
 following list shows the doublet score calculations. Each one can
@@ -61,8 +56,11 @@ be selected by its number on the following list:
 }
 \examples{
 data("raw_data", package = "CATALYST")
-tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-labels <- qcDataFrame(tech)
-initialDebris(tech, labels = labels, score = 3)
+sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
+sce <- initialBead(sce)
+sce <- initialDebris(sce)
+sce <- initialDoublet(sce)
+head(sce$scores)
+head(sce$initial)
 
 }
