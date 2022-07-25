@@ -10,7 +10,8 @@ readCytof(
   dna = c("DNA1", "DNA2"),
   event_length = "Event_length",
   viability = "Live_Dead",
-  gaussian = c("Center", "Offset", "Width", "Residual")
+  gaussian = c("Center", "Offset", "Width", "Residual"),
+  verbose = TRUE
 )
 }
 \arguments{
@@ -27,6 +28,9 @@ readCytof(
 
 \item{gaussian}{Character vector that contains the names of the Gaussian 
 Discrimination Parameters.}
+
+\item{verbose}{Logical value indicating whether or not to print a summary of
+the technical channels identified in the data.}
 }
 \value{
 A \code{SingleCellExperiment} that contains the information from

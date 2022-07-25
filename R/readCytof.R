@@ -8,6 +8,8 @@
 #' @param viability Character vector of the permeability/viability markers.
 #' @param gaussian Character vector that contains the names of the Gaussian 
 #' Discrimination Parameters.
+#' @param verbose Logical value indicating whether or not to print a summary of
+#'   the technical channels identified in the data.
 #'
 #' @return A \code{SingleCellExperiment} that contains the information from
 #' the CyTOF fcs file, the technical data that will be used to label 
@@ -72,13 +74,15 @@
 #' x <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' 
 #' @importFrom CATALYST prepData
+#' @importFrom SingleCellExperiment int_colData
 #' @export
 readCytof <- function(file.name,
                       beads = c("Bead"),
                       dna = c("DNA1", "DNA2"),
                       event_length = "Event_length",
                       viability = "Live_Dead",
-                      gaussian = c("Center", "Offset", "Width", "Residual")) {
+                      gaussian = c("Center", "Offset", "Width", "Residual"),
+                      verbose = TRUE) {
     
     sce <- NULL
     try(sce <- CATALYST::prepData(file.name), silent = TRUE)
@@ -97,25 +101,36 @@ readCytof <- function(file.name,
     
     bead_channels <- matrix(t(SummarizedExperiment::assay(sce, "exprs")[rownames(sce) %in% beads, ]),
                             nrow = ncol(SummarizedExperiment::assay(sce, "exprs")))
-    colnames(bead_channels) <- paste0("Bead", 1:ncol(bead_channels))
+    if (ncol(bead_channels) == 1) {
+        colnames(bead_channels) <- "Bead"
+    } else {
+        colnames(bead_channels) <- vapply(seq_len(ncol(bead_channels)), 
+                                          FUN = function(i){ paste0('Bead',i) },
+                                          FUN.VALUE = '')
+    }
     
     dna_channels <- matrix(t(SummarizedExperiment::assay(sce, "exprs")[rownames(sce) %in% dna, ]),
                            nrow = ncol(SummarizedExperiment::assay(sce, "exprs")))
-    if (ncol(dna_channels) > 1) {
-        colnames(dna_channels) <- paste0("DNA", 1:ncol(dna_channels))
-    } else {
+    if (ncol(dna_channels) == 1) {
         colnames(dna_channels) <- "DNA"
+    } else {
+        colnames(dna_channels) <- vapply(seq_len(ncol(dna_channels)), 
+                                         FUN = function(i){ paste0('DNA',i) },
+                                         FUN.VALUE = '')
     }
     
     perm_channels <- matrix(t(SummarizedExperiment::assay(sce, "exprs")[rownames(sce) %in% viability, ]),
                             nrow = ncol(SummarizedExperiment::assay(sce, "exprs")))
-    if (ncol(perm_channels) > 1) {
-        colnames(perm_channels) <- paste0("Viability", 1:ncol(perm_channels))
-    } else {
+    if (ncol(perm_channels) == 1) {
         colnames(perm_channels) <- "Viability"
+    } else {
+        colnames(perm_channels) <- vapply(seq_len(ncol(perm_channels)), 
+                                          FUN = function(i){
+                                              paste0('Viability',i)},
+                                          FUN.VALUE = '')
     }
     
-    gauss <- log1p(as.matrix(SingleCellExperiment::int_colData(sce)[, names(SingleCellExperiment::int_colData(sce)) %in% c(event_length, gaussian)]))
+    gauss <- log1p(as.matrix(int_colData(sce)[, names(int_colData(sce)) %in% c(event_length, gaussian)]))
     
     # Make sure names of Gaussian variables are standardized
     colnames(gauss)[grep(event_length, colnames(gauss))] <- "Event_length"
@@ -123,6 +138,24 @@ readCytof <- function(file.name,
     colnames(gauss)[grep("off", colnames(gauss), ignore.case = TRUE)] <- "Offset"
     colnames(gauss)[grep("res", colnames(gauss), ignore.case = TRUE)] <- "Residual"
     colnames(gauss)[grep("wid", colnames(gauss), ignore.case = TRUE)] <- "Width"
+    
+    if(verbose){
+        # summary of channels found
+        cat('Bead channels (', ncol(bead_channels), '): ', 
+            paste(rownames(sce)[rownames(sce) %in% beads], collapse = ', '),
+            '\n', sep = '')
+        cat('DNA channels (', ncol(dna_channels), '): ', 
+            paste(rownames(sce)[rownames(sce) %in% dna], collapse = ', '), 
+            '\n', sep = '')
+        cat('Viability channels (', ncol(perm_channels), '): ', 
+            paste(rownames(sce)[rownames(sce) %in% viability], collapse = ', '),
+            '\n', sep = '')
+        cat('Gaussian parameters (', ncol(gauss), '): ', 
+            paste(names(int_colData(sce))[names(int_colData(sce)) %in% 
+                                              c(event_length, gaussian)], 
+                  collapse = ', '),
+            sep = '')
+    }
     
     labels <- rep("cell", nrow(gauss))
     sce$label <- ifelse(rowSums(gauss == 0) > 0, "gdpZero", labels)
