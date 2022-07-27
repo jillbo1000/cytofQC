@@ -24,41 +24,114 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(cytofQC)
+library(CATALYST)
+library(SingleCellExperiment)
 library(ggplot2)
+library(gridExtra)
 ```
 
 # Quick Start
 ## Read in data and create initial dataset
 
-The function `readCytof` read in the data and formats a `SingleCellExperiment` that contains all of the QC variables and place holders for the labels, event scores, initial classification, and event probabilities. The variables are renamed in the tech dataset so that their names can be easily accessed by downstream functions. The help file specifies how to do this. The Gaussian parameters and event length are transformed with the `log1p` function. The output is a `matrix`. 
+The function `readCytof` read in the data and returns a `SingleCellExperiment` that contains all of the QC variables and place holders for the labels, event scores, initial classification, and event probabilities. The original data is stored in the `SingleCellExperiment` using the format used in `CATALYST`. The function for reading in the file requires that the names of the QC variables are identified. The function `prepData` from `CATALYST` can be used to identify the names of the QC variables. 
 
 ```{r}
 f <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
-x <- readCytof(f)
+x <- prepData(f)
+names(int_colData(x))
+rownames(x)
+
+x <- readCytof(f, 
+                 beads = c("Bead"),
+                 dna = c("DNA1", "DNA2"),
+                 event_length = "Event_length",
+                 viability = "Live_Dead",
+                 gaussian = c("Center", "Offset", "Width", "Residual"))
+x
+```
+
+The function `readCytof` adds four `DataFrames` that are place holders for the `cytofQC` functions. The four `DataFrames` are: 
+
+`tech`: Contains the data used to create the event scores and fit the models that label the data. The Gaussian parameters and the event length are transformed with the `log1p` function. 
+
+`label`: A character vector that contains the labels for the event type: bead, debris, doublet, dead (a measure of viability), cell for events that appear to be legitimate cells, and GDPzero for events where at least one Gaussian parameter or the Event_length has a value of 0. The call to `readCytof` sets all labels to "cell" or to "GDPzero". Later function calls will change these values. 
+
+`scores`: Initially filled with NA's, but will eventually be filled with scores for each event type that are used to select a training dataset that is used to create a model that labels the data. 
+
+`initial`: Initially filled in with zeros. It is filled with the initial classification for each even type. A value of -1 means that the even is not of that event type, a value of 1 means it is very likely that even type, and a value of 0 means it is unclear. Only events with values of -1 or 1 are included in the training dataset.
+
+`probs`: Initially filled with NA. The predicted probability from the model classifying each event type is recorded in this `DataFrame`. The labels are assigned in order. That is, once an event is classified as a bead, it cannot be classified as a different event type. The probabilities in this `DataFrame` can be used to identify events that look similar to another event type. 
+
+
+```{r}
 head(x$tech)
+head(x$label)
 head(x$scores)
 head(x$initial)
+head(x$probs)
 ```
 
 ## Use labelQC to obtain labels for each obsevation
 
-The integral function of cytofQC is `labelQC`. A `data.frame` obtained from `dataPrep` can be passed to `labelQC` with no other arguments and it will return a `data.frame` that contains all of the labels and the probability that each observation belongs to each of the specified labels. The data we are using for this vignette has only live cells so we call `labelQC` in a way that omits the labeling of the live/dead cells. The following call will label the cells using a support vector machine and mutual nearest neighbors. 
+The integral function of cytofQC is `labelQC`. A `SingleCellExperiment` obtained from `readCytof` can be passed to `labelQC` with no other arguments and it will return a `data.frame` that contains all of the labels and the probability that each observation belongs to each of the specified labels. The following call will label the cells using a support vector machine and 4000 data points to train the SVM for each event type. If there are not 2000 events with a -1 or 1 initial classification assignment a warning is given and a smaller dataset is used to train the data. Note that this dataset does not appear to have any dead cells.  
 
 ```{r}
-labels <- labelQC(tech, types = c("bead", "doublet", "debris"), nTrain = 1000)
-head(labels)
-table(labels$label)
+x <- labelQC(x)
+table(x$label)
+head(x$scores)
+head(x$initial)
+head(x$probs)
+```
+
+Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. A plot os not done for the dead scores because none of the events are classified as dead. 
+
+```{r}
+bead <- cytofHist(x$scores$beadScore, x$label, title = "Bead score")
+debris <- cytofHist(x$scores$debrisScore, x$label, title = "Debris score")
+doublet <- cytofHist(x$scores$doubletScore, x$label, title = "Doublet score")
+grid.arrange(bead, debris, doublet, ncol = 1)
+```
+
+It can be difficult to see some of the less represented event types. The argument type = "density" creates a histogram where each of the groups are represented by the same area instead of by count so that small groups are visible. 
+
+```{r}
+bead <- cytofHist(x$scores$beadScore, x$label, type = "density", title = "Bead score")
+debris <- cytofHist(x$scores$debrisScore, x$label, type = "density", title = "Debris score")
+doublet <- cytofHist(x$scores$doubletScore, x$label, type = "density", title = "Doublet score")
+grid.arrange(bead, debris, doublet, ncol = 1)
+```
+
+Labeling can be done using a random forest or gradient boosting machine as well. The following code shows how to generate labels with a random forest or gradient boosting machine using classification error as a loss function. 
+
+```{r eval = FALSE}
+x.rf <- labelQC(x, model = "rf", loss = "class")
+x.gbm <- labelQC(x, model = "gbm", loss = "class")
 ```
 
 
-# How does `labelQC` work?
 
-The following workflow demonstrates what is happening in the `labelQC` function. The user can use any of these functions to customize a labeling algorithm. We start with creating the basic labeling `data.frame`. The function `qcDataFrame` creates a `data.frame` that contains the labels and information about the labels. It is built using the `tech` dataset. The first variable is the label and each observation is assigned a label of either `"cell"` or `"GDPzero"`. The `"GDPzero"` label is assigned to any variable that has a 0 for any of the GDP variables. The `data.frame` has variables for beads, doublets, debris, and viability. The values for those variables are initially set to `NA`. The purpose of this dataset is to iteratively change the label for the observations and assign probabilities to each observation in regard its status as a bead, doublet, debris, or live/dead cell. 
+
+
+
+
+
+
+
+
+
+# Automated labeling with `labelQC`?
+
+The function `labelQC` will label all of the event types using either a support vector machine (SVM), gradient boosting machine (GBM), or a random forest (RF). It only requires a `Sin
+
+The following workflow demonstrates what is happening in the `labelQC` function. The user can use any of the functions to customize a labeling algorithm. We start with creating the basic labeling `data.frame`. The function `qcDataFrame` creates a `data.frame` that contains the labels and information about the labels. It is built using the `tech` dataset. The first variable is the label and each observation is assigned a label of either `"cell"` or `"GDPzero"`. The `"GDPzero"` label is assigned to any variable that has a 0 for any of the GDP variables. The `data.frame` has variables for beads, doublets, debris, and viability. The values for those variables are initially set to `NA`. The purpose of this dataset is to iteratively change the label for the observations and assign probabilities to each observation in regard its status as a bead, doublet, debris, or live/dead cell. 
 
 ```{r}
-labels <- qcDataFrame(tech)
-head(labels)
-table(labels$label)
+labels <- labelQC(tech)
+table(x$label)
+head(x$scores)
+head(x$initial)
+head(x$probs)
+
 ```
 
 
