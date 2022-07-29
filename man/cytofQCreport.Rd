@@ -28,7 +28,7 @@ Generate a cytofQC report
 \examples{
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
-sce <- labelQC(sce)
+sce <- labelQC(sce, n = 500)
 tmp <- tempdir()
 cytofQCreport(sce, tmp, 'example')
 
