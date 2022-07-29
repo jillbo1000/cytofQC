@@ -1,0 +1,187 @@
+---
+title: "Complete Guide to `cytofQC`"
+output: BiocStyle::html_document
+vignette: >
+  %\VignetteIndexEntry{Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+This is a description of the workflow for `cytofQC`, which applies QC labels to each observation in a CyTOF dataset. The Quick Start section shows how to read in data from FCS files and use the general function `labelQC` to obtain labels for all of the observations. We then demonstrate the inner workings of the function to illustrate how it works for each observation type and show how to use the individual modeling functions that make up `labelQC`. We then end with a demonstration of how the labeled data cluster using UMAP. 
+
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>", 
+  message = FALSE, 
+  warning = FALSE,
+  cache = TRUE
+)
+```
+
+```{r setup}
+library(cytofQC)
+library(CATALYST)
+library(SingleCellExperiment)
+library(ggplot2)
+library(gridExtra)
+```
+
+# Quick Start
+## Read in data and create initial dataset
+
+The function `readCytof` read in the data and returns a `SingleCellExperiment` that contains all of the QC variables and place holders for the labels, event scores, initial classification, and event probabilities. The original data is stored in the `SingleCellExperiment` using the format used in `CATALYST`. The function for reading in the file requires that the names of the QC variables are identified. The function `prepData` from `CATALYST` can be used to identify the names of the QC variables. 
+
+```{r}
+f <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
+x <- prepData(f)
+names(int_colData(x))
+rownames(x)
+
+x <- readCytof(f, 
+                 beads = c("Bead"),
+                 dna = c("DNA1", "DNA2"),
+                 event_length = "Event_length",
+                 viability = "Live_Dead",
+                 gaussian = c("Center", "Offset", "Width", "Residual"))
+x
+```
+
+The function `readCytof` adds four `DataFrames` that are place holders for the `cytofQC` functions. The four `DataFrames` are: 
+
+`tech`: Contains the data used to create the event scores and fit the models that label the data. The Gaussian parameters and the event length are transformed with the `log1p` function. 
+
+`label`: A character vector that contains the labels for the event type: bead, debris, doublet, dead (a measure of viability), cell for events that appear to be legitimate cells, and GDPzero for events where at least one Gaussian parameter or the Event_length has a value of 0. The call to `readCytof` sets all labels to "cell" or to "GDPzero". Later function calls will change these values. 
+
+`scores`: Initially filled with NA's, but will eventually be filled with scores for each event type that are used to select a training dataset that is used to create a model that labels the data. 
+
+`initial`: Initially filled in with zeros. It is filled with the initial classification for each even type. A value of -1 means that the even is not of that event type, a value of 1 means it is very likely that even type, and a value of 0 means it is unclear. Only events with values of -1 or 1 are included in the training dataset.
+
+`probs`: Initially filled with NA. The predicted probability from the model classifying each event type is recorded in this `DataFrame`. The labels are assigned in order. That is, once an event is classified as a bead, it cannot be classified as a different event type. The probabilities in this `DataFrame` can be used to identify events that look similar to another event type. 
+
+
+```{r}
+head(x$tech)
+head(x$label)
+head(x$scores)
+head(x$initial)
+head(x$probs)
+```
+
+## Use labelQC to obtain labels for each obsevation
+
+The integral function of cytofQC is `labelQC`. A `SingleCellExperiment` obtained from `readCytof` can be passed to `labelQC` with no other arguments and it will return a `data.frame` that contains all of the labels and the probability that each observation belongs to each of the specified labels. The following call will label the cells using a support vector machine and 4000 data points to train the SVM for each event type. If there are not 2000 events with a -1 or 1 initial classification assignment a warning is given and a smaller dataset is used to train the data. Note that this dataset does not appear to have any dead cells.  
+
+```{r}
+x <- labelQC(x)
+table(x$label)
+head(x$scores)
+head(x$initial)
+head(x$probs)
+```
+
+Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. A plot os not done for the dead scores because none of the events are classified as dead. 
+
+```{r}
+bead <- cytofHist(x$scores$beadScore, x$label, title = "Bead score")
+debris <- cytofHist(x$scores$debrisScore, x$label, title = "Debris score")
+doublet <- cytofHist(x$scores$doubletScore, x$label, title = "Doublet score")
+grid.arrange(bead, debris, doublet, ncol = 1)
+```
+
+It can be difficult to see some of the less represented event types. The argument type = "density" creates a histogram where each of the groups are represented by the same area instead of by count so that small groups are visible. 
+
+```{r}
+bead <- cytofHist(x$scores$beadScore, x$label, type = "density", title = "Bead score")
+debris <- cytofHist(x$scores$debrisScore, x$label, type = "density", title = "Debris score")
+doublet <- cytofHist(x$scores$doubletScore, x$label, type = "density", title = "Doublet score")
+grid.arrange(bead, debris, doublet, ncol = 1)
+```
+
+Labeling can be done using a random forest or gradient boosting machine as well. The following code shows how to generate labels with a random forest or gradient boosting machine using classification error as a loss function. 
+
+```{r eval = FALSE}
+x.rf <- labelQC(x, model = "rf", loss = "class")
+x.gbm <- labelQC(x, model = "gbm", loss = "class")
+```
+
+# Individual functions
+
+Each of the event types can be modeled separately outside of `labelQC`. The following code snippets show how to do this. This code is the method used by `labelQC` so this section demonstrates the labeling methods. 
+
+## Beads
+
+The beads are typically the first type of observation that should be labeled. The beads should separate clearly from the non-beads. The first step is to obtain initial labels for the beads. This is done with the `initialBead` function. The function returns a `SingleCellExperiment` that contains the bead assignment for each observation in the `scores` object and an initial classification that in the `initial` object. This information is then used to assign a label of `bead` to observations that look like beads. The predicted probability returned by the classification model is reported in the `probs` object and indicates how much each observation looks like a bead.
+
+```{r}
+x <- readCytof(f, 
+                 beads = c("Bead"),
+                 dna = c("DNA1", "DNA2"),
+                 event_length = "Event_length",
+                 viability = "Live_Dead",
+                 gaussian = c("Center", "Offset", "Width", "Residual"))
+
+x <- initialBead(x)
+x <- svmLabel(x, type = "bead", n = 500)
+
+```
+
+
+## Debris
+
+The debris are typically classified after the beads. They are identified primarily by low DNA content and short event time. Labeling debris prior to doublets aids in identifying doublets. 
+
+```{r}
+x <- initialDebris(x)
+x <- svmLabel(x, type = "debris", n = 500)
+
+```
+
+
+## Doublets
+
+Doublets are more difficult to identify than beads or debris so it is recommended that they are labeled prior to labeling doublets.
+
+```{r}
+x <- initialDoublet(x)
+x <- svmLabel(x, type = "doublet", n = 500)
+
+```
+
+## Dead cells
+
+Viability is not as straightforward as many CyTOF data cleaning sites indicate. The viability measure is really measuring the permeability of the cell. It may be important to the downstream analysis or it may not. It is important to understand how permeability impacts your data. However, because it is most often used to distinguish between live and dead cells, it is referred to as "dead" for brevity. 
+
+Note that this produces a warning that there are not enough dead or non-dead cells to build a classification model for viability. This is because fewer than 100 points were classified as dead cells by the `initialDead` function. Thus, none of the observations will be labeled "dead" in \code{x}.
+
+```{r}
+x <- initialDead(x)
+x <- svmLabel(x, type = "dead", n = 500)
+
+```
+
+# UMAP for exploration
+
+The following is a UMAP that was created using only the `tech` data and colored with the labels from `cytofQC`. Note that the labels from `cytofQC` match the clusters in the UMAP and that neither they nor the scores were used to generate the UMAP.  
+
+```{r}
+library(uwot)
+lab.umap <- umap(scale(x$tech), ret_model = TRUE)
+lab.umapD <- data.frame(x = lab.umap$embedding[, 1], 
+                        y = lab.umap$embedding[, 2], 
+                        labs = x$label)
+```
+
+```{r}
+library(RColorBrewer)
+ggplot(lab.umapD, aes(x = x, y = y)) +
+    geom_point(aes(color = labs), size = 0.5, alpha = 0.5) +
+    scale_color_manual(name = NULL, values = brewer.pal(5, "Dark2")) +
+    guides(colour = guide_legend(override.aes = list(size = 2))) +
+    labs(x = NULL, y = NULL) +
+    theme_bw()
+```
+
