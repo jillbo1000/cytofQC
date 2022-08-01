@@ -30,9 +30,8 @@ General preliminary classification.
 }
 \examples{
 data("raw_data", package = "CATALYST")
-tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-lab <- qcDataFrame(tech)
-doublets <- initialDoublet(tech, labels = lab, score = 1)
-cytofQC:::initialGuess(doublets$doubletScore)
+sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+sce <- initialDoublet(sce)
+cytofQC:::initialGuess(sce$scores$doubletScore)
 
 }

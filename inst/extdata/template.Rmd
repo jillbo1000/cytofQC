@@ -14,11 +14,11 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 ```{r load_data}
-res <- readRDS('cytofQCdata.rds')
+res <- readRDS('cytofQCdata_temp.rds')
 tech <- res$tech
-labels <- res$labels
+labels <- factor(res$label)
 rm(res)
-stopifnot(nrow(tech) == nrow(labels))
+stopifnot(nrow(tech) == length(labels))
 message('Found ', nrow(tech), ' events.', '\n')
 message('Found the following technical variables:','\n',
         paste(colnames(tech), collapse = ', '), '\n')
@@ -28,8 +28,8 @@ message('Found the following technical variables:','\n',
 ## Event type summary
 
 ```{r table1}
-cbind(count = table(labels$label), 
-      percent = round(100 * table(labels$label) / nrow(labels), digits = 2))
+cbind(count = table(labels), 
+      percent = round(100 * table(labels) / length(labels), digits = 2))
 ```
 
 ## Technical UMAP
@@ -42,10 +42,10 @@ if(params$runUMAP){
     require(RColorBrewer)
     cols <- brewer.pal(5, "Set2")
     layout(matrix(c(1,1,2), nrow=1))
-    plot(umap, asp=1, col = cols[labels$label], cex = .25, pch=16,
+    plot(umap, asp=1, col = cols[labels], cex = .25, pch=16,
          main = "UMAP on Technical Variables")
     plot.new()
-    legend("left", pch=19, col = cols, legend = levels(labels$label), bty='n')
+    legend("left", pch=19, col = cols, legend = levels(labels), bty='n')
 }
 ```
 

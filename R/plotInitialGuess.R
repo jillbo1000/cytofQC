@@ -15,11 +15,9 @@
 #'   
 #' @examples
 #' data("raw_data", package = "CATALYST")
-#' tech <- dataPrep(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
-#' lab <- qcDataFrame(tech)
-#' doublets <- initialDoublet(tech, labels = lab, score = 1)
-#' ig <- initialGuess(doublets$doubletScore)
-#' plotInitialGuess(ig)
+#' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+#' sce <- initialDoublet(sce)
+#' cytofQC:::plotInitialGuess(sce$scores$doubletScore)
 #' 
 plotInitialGuess <- function(x, IG = NULL, fit = NULL){
     
