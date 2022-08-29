@@ -2,7 +2,7 @@
 % Please edit documentation in R/initialBead.R
 \name{initialBead}
 \alias{initialBead}
-\title{Preliminary bead classification.}
+\title{Preliminary bead classification}
 \usage{
 initialBead(x)
 }
@@ -16,7 +16,7 @@ bead designation for each event. This information is stored in the
 \code{SingleCellExperiment}.
 }
 \description{
-Preliminary bead classification.
+Preliminary bead classification
 }
 \details{
 The beads are typically the first cell classification that is done. The
