@@ -72,11 +72,15 @@ gbmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"),
         pred <- rep(0, nrow(xs))
     } else {
         gbmTune <- EZtune::eztune(x = xs[index, ], 
-                                  y = factor(x$initial[index, grep(type, colnames(x$initial))]), 
+                                  y = factor(x$initial[index, 
+                                                       grep(type, 
+                                                            colnames(x$initial))]), 
                                   method = "gbm",
                                   fast = 0.5, loss = loss)
         
-        dat <- data.frame(init = as.numeric(x$initial[index, grep(type, colnames(x$initial))]), 
+        dat <- data.frame(init = as.numeric(x$initial[index, 
+                                                      grep(type, 
+                                                           colnames(x$initial))]), 
                           xs[index, ])
         dat$init <- ifelse(dat$init == 1, dat$init, 0)
         
@@ -87,12 +91,14 @@ gbmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"),
                            shrinkage = gbmTune$shrinkage,
                            n.minobsinnode = gbmTune$n.minobsinnode)
         
-        pred <- gbm::predict.gbm(gbmfit, as.data.frame(xs), n.trees =  gbmTune$n.trees, 
+        pred <- gbm::predict.gbm(gbmfit, as.data.frame(xs), 
+                                 n.trees =  gbmTune$n.trees, 
                                  type = "response")
     }
     
     x$probs[, grep(type, colnames(x$initial))] <- pred
-    x$label[x$label == "cell"] <- ifelse(round(pred[x$label == "cell"]), type, "cell")
+    x$label[x$label == "cell"] <- ifelse(round(pred[x$label == "cell"]), 
+                                         type, "cell")
     
     x
     

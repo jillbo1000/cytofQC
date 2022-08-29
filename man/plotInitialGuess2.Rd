@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotInitialGuess2.R
 \name{plotInitialGuess2}
 \alias{plotInitialGuess2}
-\title{Plot preliminary classification from initialGuess.}
+\title{Plot preliminary classification from initialGuess with single plot}
 \usage{
 plotInitialGuess2(x, IG = NULL, fit = NULL, title = NULL)
 }
@@ -18,13 +18,15 @@ function that contains the fitted values.}
 plotted. Otherwise, a numeric value of 1, 2, or 3 can be be selected to 
 plot single normal fit, mixture of two normals, or the mixture of three
 normals as fit by \code{initialGuess}.}
+
+\item{title}{Otional title to appear at the top of the plot.}
 }
 \value{
 A histogram that shows the score with the mixture of normal 
 distributions overlayed.
 }
 \description{
-Plot preliminary classification from initialGuess.
+Plot preliminary classification from initialGuess with single plot
 }
 \examples{
 data("raw_data", package = "CATALYST")

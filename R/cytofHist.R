@@ -1,3 +1,5 @@
+#' @importFrom ggplot2 stat
+NULL
 #' Returns histogram for grouped data
 #'
 #' @param x Numeric vector of values that will be plotted.
@@ -20,43 +22,45 @@
 #' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' sce <- labelQC(sce)
 #' cytofHist(sce$scores$beadScore, sce$label)
-#'
+#' 
 #' @export
 cytofHist <- function(x, group, type = "count", na.rm = FALSE, title = NULL) {
-
-  tmp <- data.frame(x, group = group)
-  cols <- c("#69b3a2", "#404080", "#80b1d3", "#d4b9da", "#fdd0a2")
-
-  if (na.rm) {
-    tmp <- tmp[!is.na(tmp$group), ]
-  }
-
-  cols <- cols[seq_along(unique(tmp$group))]
-
-  g <- ggplot2::ggplot(tmp, ggplot2::aes(x = x, fill = factor(group)))
-
-  if (type == "count") {
-    g <- g + ggplot2::geom_histogram(color = "#e9ecef", alpha=0.6,
-                                     position = 'identity', bins = 100)
-  } else if (type == "density") {
-    g <- g + ggplot2::geom_histogram(color="#e9ecef", alpha=0.6,
-                                     position = 'identity',
-                                     bins = 100, ggplot2::aes(y = ..density..))
-  } else {
-    warning("invalid type - using counts for histogram")
-    g <- g + ggplot2::geom_histogram(color = "#e9ecef", alpha=0.6,
-                                     position = 'identity', bins = 100)
-  }
-
-  g <- g + ggplot2::scale_fill_manual(values = cols) +
-    hrbrthemes::theme_ipsum() +
-    ggplot2::labs(fill = "") +
-    ggplot2::theme_bw()
-
-  if(!is.null(title)) {
-    g <- g + ggplot2::ggtitle(title)
-  }
-
-  g
-
+    
+    tmp <- data.frame(x, group = group)
+    cols <- c("#69b3a2", "#404080", "#80b1d3", "#d4b9da", "#fdd0a2")
+    
+    if (na.rm) {
+        tmp <- tmp[!is.na(tmp$group), ]
+    }
+    
+    cols <- cols[seq_along(unique(tmp$group))]
+    
+    g <- ggplot2::ggplot(tmp, ggplot2::aes(x = x, fill = factor(group)))
+    
+    if (type == "count") {
+        g <- g + ggplot2::geom_histogram(color = "#e9ecef", alpha=0.6,
+                                         position = 'identity', bins = 100)
+    } else if (type == "density") {
+        density <- NULL
+        g <- g + ggplot2::geom_histogram(color="#e9ecef", alpha=0.6,
+                                         position = 'identity',
+                                         bins = 100, 
+                                         ggplot2::aes(y = stat(density)))
+    } else {
+        warning("invalid type - using counts for histogram")
+        g <- g + ggplot2::geom_histogram(color = "#e9ecef", alpha=0.6,
+                                         position = 'identity', bins = 100)
+    }
+    
+    g <- g + ggplot2::scale_fill_manual(values = cols) +
+        hrbrthemes::theme_ipsum() +
+        ggplot2::labs(fill = "") +
+        ggplot2::theme_bw()
+    
+    if(!is.null(title)) {
+        g <- g + ggplot2::ggtitle(title)
+    }
+    
+    g
+    
 }

@@ -1,4 +1,4 @@
-#' Preliminary doublet classification.
+#' Preliminary doublet classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
 #' @param score A value of 1, 2, or 3 that specifies the doublet score that 

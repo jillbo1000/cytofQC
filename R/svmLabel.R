@@ -73,25 +73,33 @@ svmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"),
         pred <- rep(0, nrow(xs))
     } else {
         svmTune <- EZtune::eztune(x = xs[index, ], 
-                                  y = factor(x$initial[index, grep(type, colnames(x$initial))]), 
+                                  y = factor(x$initial[index, 
+                                                       grep(type, 
+                                                            colnames(x$initial))]), 
                                   method = "svm",
                                   fast = 0.5, 
                                   loss = loss)
         
         svmfit <- e1071::svm(x = xs[index, ], 
-                             y = factor(x$initial[index, grep(type, colnames(x$initial))]),
+                             y = factor(x$initial[index, 
+                                                  grep(type, 
+                                                       colnames(x$initial))]),
                              cost = svmTune$cost, 
                              gamma = svmTune$gamma,
                              kernel = "radial", 
                              probability = TRUE)
         
         pred.pr <- stats::predict(svmfit, xs, probability = TRUE)
-        pred <- attr(pred.pr, "probabilities")[, colnames(attr(pred.pr, "probabilities")) == "1"]
+        pred <- attr(pred.pr, 
+                     "probabilities")[, 
+                                      colnames(attr(pred.pr, 
+                                                    "probabilities")) == "1"]
     }
     
     
     x$probs[, grep(type, colnames(x$initial))] <- pred
-    x$label[x$label == "cell"] <- ifelse(round(pred[x$label == "cell"]), type, "cell")
+    x$label[x$label == "cell"] <- ifelse(round(pred[x$label == "cell"]), 
+                                         type, "cell")
     
     x
     

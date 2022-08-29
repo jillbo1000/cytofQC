@@ -2,7 +2,7 @@
 % Please edit documentation in R/initialDoublet.R
 \name{initialDoublet}
 \alias{initialDoublet}
-\title{Preliminary doublet classification.}
+\title{Preliminary doublet classification}
 \usage{
 initialDoublet(x, score = 1, standardize = TRUE)
 }
@@ -24,7 +24,7 @@ the doublet designation for each event. This information is stored in the
 \code{SingleCellExperiment}.
 }
 \description{
-Preliminary doublet classification.
+Preliminary doublet classification
 }
 \details{
 The beads are typically the first cell classification that is done

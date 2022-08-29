@@ -17,6 +17,8 @@ cytofQCreport(sce, outDir, sampName, runUMAP = TRUE, ...)
 \item{runUMAP}{Logical value indicating whether or not to include a UMAP plot
 in the report. This plot can be beneficial for diagnostic purposes, but is
 time-consuming to generate.}
+
+\item{...}{Additions arguments that may be passed to the function.}
 }
 \value{
 If successful, returns \code{TRUE} silently and generates the

@@ -7,6 +7,7 @@
 #' @param runUMAP Logical value indicating whether or not to include a UMAP plot
 #'   in the report. This plot can be beneficial for diagnostic purposes, but is
 #'   time-consuming to generate.
+#' @param ... Additions arguments that may be passed to the function.
 #'
 #' @return If successful, returns \code{TRUE} silently and generates the
 #'   specified QC report.
@@ -26,22 +27,23 @@ cytofQCreport <- function(sce, outDir, sampName, runUMAP = TRUE, ...){
     if(missing(sampName)){
         sampName <- basename(outDir)
     }
-    labels <- factor(sce$label, levels = c("cell", "GDPzero", "bead", "doublet", "debris"))
+    labels <- factor(sce$label, 
+                     levels = c("cell", "GDPzero", "bead", "doublet", "debris"))
     out <- list(tech = sce$tech, labels = labels)
     
     # temporarily store results on disk
     saveRDS(out, file = file.path(outDir, 'cytofQCdata_temp.rds'))
-
+    
     template <- system.file("extdata", "template.Rmd", 
                             package = "cytofQC", mustWork = TRUE)
-
+    
     ## Copy the template file to outDir
     file2Knit <- file.path(outDir, paste0(sampName,'.Rmd'))
     cp <- file.copy(template, file2Knit, overwrite = TRUE)
     if(!cp){
         msg <- paste("Template file was not able to be copied.",
-            "Do you need to set overwrite = TRUE",
-            "or check write permissions?")
+                     "Do you need to set overwrite = TRUE",
+                     "or check write permissions?")
         stop(msg)
     }
     stopifnot(file.exists(file2Knit))

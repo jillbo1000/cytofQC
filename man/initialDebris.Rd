@@ -2,7 +2,7 @@
 % Please edit documentation in R/initialDebris.R
 \name{initialDebris}
 \alias{initialDebris}
-\title{Preliminary debris classification.}
+\title{Preliminary debris classification}
 \usage{
 initialDebris(x, score = 1, standardize = TRUE)
 }
@@ -24,7 +24,7 @@ debris designation for each event. This information is stored in the
 \code{SingleCellExperiment}.
 }
 \description{
-Preliminary debris classification.
+Preliminary debris classification
 }
 \details{
 The beads are typically the first cell classification that is done

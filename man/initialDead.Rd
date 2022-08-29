@@ -2,7 +2,7 @@
 % Please edit documentation in R/initialDead.R
 \name{initialDead}
 \alias{initialDead}
-\title{Preliminary viability classification.}
+\title{Preliminary viability classification}
 \usage{
 initialDead(x, dna = FALSE, standardize = TRUE)
 }
@@ -23,7 +23,7 @@ in the \code{score} and \code{initial} objects in the colData for the
 \code{SingleCellExperiment}.
 }
 \description{
-Preliminary viability classification.
+Preliminary viability classification
 }
 \details{
 The beads are typically the first cell classification that is done

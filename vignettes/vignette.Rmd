@@ -185,3 +185,9 @@ ggplot(lab.umapD, aes(x = x, y = y)) +
     theme_bw()
 ```
 
+## SessionInfo
+```{r}
+library(utils)
+sessionInfo()
+```
+

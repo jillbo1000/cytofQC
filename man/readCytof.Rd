@@ -18,7 +18,8 @@ readCytof(
 \item{file.name}{A path to an .fcs file that contains CyTOF data or a 
 \code{flowSet} object containing a single sample.}
 
-\item{beads}{character vector that contains the names of all of the bead channels.}
+\item{beads}{character vector that contains the names of all of the bead 
+channels.}
 
 \item{dna}{Character vector that contains the names of the DNA markers.}
 

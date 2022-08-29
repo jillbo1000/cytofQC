@@ -2,7 +2,8 @@
 #'
 #' @param file.name A path to an .fcs file that contains CyTOF data or a 
 #' \code{flowSet} object containing a single sample.
-#' @param beads character vector that contains the names of all of the bead channels.
+#' @param beads character vector that contains the names of all of the bead 
+#' channels.
 #' @param dna Character vector that contains the names of the DNA markers.
 #' @param event_length Character vector of the event length variable.
 #' @param viability Character vector of the permeability/viability markers.
@@ -130,14 +131,19 @@ readCytof <- function(file.name,
                                           FUN.VALUE = '')
     }
     
-    gauss <- log1p(as.matrix(int_colData(sce)[, names(int_colData(sce)) %in% c(event_length, gaussian)]))
+    gauss <- log1p(as.matrix(int_colData(sce)[, names(int_colData(sce)) %in% 
+                                                  c(event_length, gaussian)]))
     
     # Make sure names of Gaussian variables are standardized
     colnames(gauss)[grep(event_length, colnames(gauss))] <- "Event_length"
-    colnames(gauss)[grep("enter", colnames(gauss), ignore.case = TRUE)] <- "Center"
-    colnames(gauss)[grep("off", colnames(gauss), ignore.case = TRUE)] <- "Offset"
-    colnames(gauss)[grep("res", colnames(gauss), ignore.case = TRUE)] <- "Residual"
-    colnames(gauss)[grep("wid", colnames(gauss), ignore.case = TRUE)] <- "Width"
+    colnames(gauss)[grep("enter", colnames(gauss), ignore.case = TRUE)] <- 
+        "Center"
+    colnames(gauss)[grep("off", colnames(gauss), ignore.case = TRUE)] <- 
+        "Offset"
+    colnames(gauss)[grep("res", colnames(gauss), ignore.case = TRUE)] <- 
+        "Residual"
+    colnames(gauss)[grep("wid", colnames(gauss), ignore.case = TRUE)] <- 
+        "Width"
     
     if(verbose){
         # summary of channels found
@@ -159,7 +165,7 @@ readCytof <- function(file.name,
     
     labels <- rep("cell", nrow(gauss))
     sce$label <- ifelse(rowSums(gauss == 0) > 0, "gdpZero", labels)
-
+    
     sce$probs <- S4Vectors::DataFrame(bead = rep(NA, nrow(gauss)), 
                                       debris = rep(NA, nrow(gauss)), 
                                       doublet = rep(NA, nrow(gauss)), 

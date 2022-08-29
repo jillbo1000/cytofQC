@@ -1,13 +1,20 @@
 Package: cytofQC
 Type: Package
-Title: Labels normalized cells for CyTOF data and assigns probabilities for each label.
-Version: 0.1.0
-Author: Kelly Street and Jill Lundell
-Maintainer: The package maintainer <jlundell@hsph.harvard.edu>
-Description: cytofQC is a package for initial cleaning of CyTOF data. It uses a semi-supervised approach for labeling cells with their most likely data type (bead, doublet, debris, dead) and the probability that they belong to each label type. 
-License: What license is it under?
+Title: Labels normalized cells for CyTOF data and assigns probabilities for each label
+Version: 1.0.0
+Authors@R: c(
+    person("Jill", "Lundell", role = c("aut", "cre"), email = "jflundell@gmail.com", comment = c(ORCID = "0000-0002-6048-4700")),
+    person("Kelly", "Street", role = "aut", email = "street.kelly@gmail.com", comment = c(ORCID = "0000-0001-6379-5013")))
+Description: cytofQC is a package for initial cleaning of CyTOF data. It uses a semi-supervised approach for labeling cells with their most likely data type (bead, doublet, debris, dead) and the probability that they belong to each label type. This package does not remove data from the dataset, but provides labels and information to aid the data user in cleaning their data. Our algorithm is able to distinguish between doublets and large cells.  
+License: Artistic-2.0
+URL: https://github.com/jillbo1000/cytofQC
+BugReports: https://github.com/jillbo1000/cytofQC/issues
+biocViews: 
+    Software,
+    SingleCell,
+    Annotation
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Imports:
     CATALYST,
     flowCore,
@@ -17,13 +24,14 @@ Imports:
     ggplot2,
     hrbrthemes,
     matrixStats,
-    mclust,
     randomForest,
     rmarkdown,
     SingleCellExperiment,
     stats, 
     SummarizedExperiment,
-    ssc
+    ssc,
+    S4Vectors,
+    graphics
 RoxygenNote: 7.2.1
 Suggests: 
     ggpubr,

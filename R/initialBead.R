@@ -1,4 +1,4 @@
-#' Preliminary bead classification.
+#' Preliminary bead classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
 #'
@@ -43,7 +43,8 @@ initialBead <- function(x) {
     }
     
     if (length(bead_channels) > 1) {
-        x$scores[, "beadScore"] <- rowSums(as.matrix(x$tech[, bead_channels]), na.rm = FALSE)
+        x$scores[, "beadScore"] <- rowSums(as.matrix(x$tech[, bead_channels]), 
+                                           na.rm = FALSE)
     } else if (length(bead_channels) == 1){
         x$scores[, "beadScore"] <- x$tech[, bead_channels]
     } else {

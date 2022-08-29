@@ -1,4 +1,3 @@
-
 # produce initial guess labels based on mixture model 
 # (truncated normal + normals)
 
@@ -15,7 +14,8 @@
 # fit a mixture of a half normal and a normal
 #' @importFrom matrixStats weightedSd
 .mixFit2 <- function(x, thresh = .01){
-    # hidden factor, Z in [0,1], is prob observation X originated from left distn.
+    # hidden factor, Z in [0,1], is prob observation X originated from 
+    # left distn.
     # p1 := mean(Z)
     Z <- as.numeric(x <= max(x)*1/2)
     if(sum(1-Z) < 3){
@@ -55,7 +55,9 @@
     S[S==0] <- .Machine$double.eps
     ll <- sum(log(S))
     
-    return(list(pars = c(p1=p1,s1=s1,m2=m2,s2=s2), ll = ll, bic = -2*ll+4*log(length(x)),
+    return(list(pars = c(p1=p1,s1=s1,m2=m2,s2=s2), 
+                ll = ll, 
+                bic = -2*ll+4*log(length(x)),
                 dens = cbind(pleft, pright)))
 }
 
@@ -132,7 +134,8 @@
     S[S==0] <- .Machine$double.eps
     ll <- sum(log(S))
     
-    return(list(pars = c(p1=p[1],p2=p[2],p3=p[3], m2=m2,m3=m3, s1=s1,s2=s2,s3=s3), 
+    return(list(pars = c(p1=p[1],p2=p[2],p3=p[3], 
+                         m2=m2,m3=m3, s1=s1,s2=s2,s3=s3), 
                 ll = ll, bic = -2*ll+7*log(length(x)),
                 dens = cbind(pleft,pmid,pright)))
 }

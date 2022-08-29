@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotInitialGuess.R
 \name{plotInitialGuess}
 \alias{plotInitialGuess}
-\title{Plot preliminary classification from initialGuess.}
+\title{Plot preliminary classification from initialGuess}
 \usage{
 plotInitialGuess(x, IG = NULL, fit = NULL)
 }
@@ -24,7 +24,7 @@ A histogram that shows the score with the mixture of normal
 distributions overlayed.
 }
 \description{
-Plot preliminary classification from initialGuess.
+Plot preliminary classification from initialGuess
 }
 \examples{
 data("raw_data", package = "CATALYST")

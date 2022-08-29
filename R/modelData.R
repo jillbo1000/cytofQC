@@ -1,4 +1,4 @@
-#' Returns indices for data to be used to create the final classification model.
+#' Returns indices for data to be used to create the final classification model
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}} 
 #' with the scores and initial columns filled out for the event type of 
@@ -31,7 +31,8 @@
 #' train <- modelData(sce, type = "bead", n = 4000)
 #'
 #' @export
-modelData <- function(x, type = c("bead", "doublet", "debris", "dead"), n = 4000) {
+modelData <- function(x, type = c("bead", "doublet", "debris", "dead"), 
+                      n = 4000) {
     
     type <- tolower(type)
     if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
@@ -42,18 +43,26 @@ modelData <- function(x, type = c("bead", "doublet", "debris", "dead"), n = 4000
         stop("Only one type can be selected.")
     }
     
-        poss.ind <- seq_along(x$label)
-        poss.ind <- poss.ind[x$initial[, grep(type, colnames(x$initial))] != 0 & 
-                                 x$label == "cell"]
-        if (length(poss.ind) < n * 2) {
-            n <- 0.5 * length(poss.ind)
-            warning(paste("Fewer than n/2 points in dataset. ", n, " points used in training set."))
-        }
-        
-        poss.wt <- ifelse(x$initial[, grep(type, colnames(x$initial))][poss.ind] == -1, 
-                          (1000 / table(x$initial[, grep(type, colnames(x$initial))][poss.ind]))[1], 
-                          (1000 / table(x$initial[, grep(type, colnames(x$initial))][poss.ind]))[2])
-
+    poss.ind <- seq_along(x$label)
+    poss.ind <- poss.ind[x$initial[, grep(type, colnames(x$initial))] != 0 & 
+                             x$label == "cell"]
+    if (length(poss.ind) < n * 2) {
+        n <- 0.5 * length(poss.ind)
+        warning(paste("Fewer than n/2 points in dataset. ", n, 
+                      " points used in training set."))
+    }
+    
+    poss.wt <- ifelse(x$initial[, grep(type, 
+                                       colnames(x$initial))][poss.ind] == -1, 
+                      (1000 / 
+                           table(x$initial[, 
+                                           grep(type, 
+                                                colnames(x$initial))][poss.ind]))[1], 
+                      (1000 / 
+                           table(x$initial[, 
+                                           grep(type, 
+                                                colnames(x$initial))][poss.ind]))[2])
+    
     sample(poss.ind, n, prob = poss.wt)
     
 }

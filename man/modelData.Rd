@@ -2,7 +2,7 @@
 % Please edit documentation in R/modelData.R
 \name{modelData}
 \alias{modelData}
-\title{Returns indices for data to be used to create the final classification model.}
+\title{Returns indices for data to be used to create the final classification model}
 \usage{
 modelData(x, type = c("bead", "doublet", "debris", "dead"), n = 4000)
 }
@@ -22,7 +22,7 @@ should be included in the creation of the final classification model for
 the event type of interest (bead, debris, doublet, dead).
 }
 \description{
-Returns indices for data to be used to create the final classification model.
+Returns indices for data to be used to create the final classification model
 }
 \details{
 The indices that are returned by \code{modelData} are be used to

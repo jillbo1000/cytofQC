@@ -44,53 +44,58 @@
 s3vmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"), 
                       loss = "auc", n = 4000, standardize = TRUE) {
     
-       
-        type <- tolower(type)
-        if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
-            stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
-        }
+    
+    type <- tolower(type)
+    if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
+        stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
+    }
+    
+    if (standardize) {
+        xs <- scale(x$tech)
+    } else {
+        xs <- x$tech
+    }
+    
+    loss <- tolower(loss)
+    if (loss != "auc" & loss != "class") {
+        warning("Invalid loss specified. AUC used to tune model.")
+        loss <- "auc"
+    }
+    
+    index <- modelData(x, type = type)
+    
+    if (sum(x$initial[index, grep(type, colnames(x$initial))] == -1) < 100 | 
+        sum(x$initial[index, grep(type, colnames(x$initial))] == 1) < 100) {
+        warning(paste("Not enough ", type, " or non-", 
+                      type, "to build model."))
+        pred.pr <- rep(0, nrow(xs))
         
-        if (standardize) {
-            xs <- scale(x$tech)
-        } else {
-            xs <- x$tech
-        }
+    } else {
         
-        loss <- tolower(loss)
-        if (loss != "auc" & loss != "class") {
-            warning("Invalid loss specified. AUC used to tune model.")
-            loss <- "auc"
-        }
-        
-        index <- modelData(x, type = type)
-        
-        if (sum(x$initial[index, grep(type, colnames(x$initial))] == -1) < 100 | 
-            sum(x$initial[index, grep(type, colnames(x$initial))] == 1) < 100) {
-            warning(paste("Not enough ", type, " or non-", type, "to build model."))
-            pred.pr <- rep(0, nrow(xs))
-            
-        } else {
-            
-            y.s3vm <- rep(NA, nrow(xs))
-            y.s3vm[index] <- x$initial[index, grep(type, colnames(x$initial))]
-            s3vmfit <- ssc::selfTraining(x = xs, y = factor(y.s3vm), 
-                                         x.inst = TRUE, learner = e1071::svm,
-                                         learner.pars = list(kernel ="radial", 
-                                                             scale = FALSE, 
-                                                             probability = TRUE),
-                                         pred = function(m, x){
-                                             attr(predict(m, x, probability = TRUE), 
-                                                  "probabilities")
-                                         })
-            pred <- stats::predict(s3vmfit$model, xs, probability = TRUE)
-            pred.pr <- attr(pred, "probabilities")[, colnames(attr(pred, "probabilities")) == "1"]
-            
-        }
-        
-        x$probs[, grep(type, colnames(x$initial))] <- pred.pr
-        x$label[x$label == "cell"] <- ifelse(round(pred.pr[x$label == "cell"]), type, "cell")
-        
-        x
+        y.s3vm <- rep(NA, nrow(xs))
+        y.s3vm[index] <- x$initial[index, grep(type, colnames(x$initial))]
+        s3vmfit <- ssc::selfTraining(x = xs, y = factor(y.s3vm), 
+                                     x.inst = TRUE, learner = e1071::svm,
+                                     learner.pars = list(kernel ="radial", 
+                                                         scale = FALSE, 
+                                                         probability = TRUE),
+                                     pred = function(m, x){
+                                         attr(predict(m, x, 
+                                                      probability = TRUE), 
+                                              "probabilities")
+                                     })
+        pred <- stats::predict(s3vmfit$model, xs, probability = TRUE)
+        pred.pr <- attr(pred, 
+                        "probabilities")[, 
+                                         colnames(attr(pred, 
+                                                       "probabilities")) == "1"]
         
     }
     
+    x$probs[, grep(type, colnames(x$initial))] <- pred.pr
+    x$label[x$label == "cell"] <- ifelse(round(pred.pr[x$label == "cell"]), 
+                                         type, "cell")
+    
+    x
+    
+}

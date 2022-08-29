@@ -48,12 +48,12 @@ cannot be completed until the corresponding initialization function
 (\code{initialBead}, \code{initialDebris}, \code{initialDoublet}, or 
 \code{initialDead}) is done on the \code{SingleCellExperiment} created by 
 \code{readCytof}. 
-The random forest uses the defaults from \code{randomForest} and then predicted 
-values are computed for all of the events in \code{x}. If the predicted
-probability for the label type is greater than 0.5, the label is changed to
-the specified type. However, if an observation already has a label other 
-than 'cell' in the \code{label} variable, it will not be changed. The 
-predicted probabilities for all of the observations are stored in the 
+The random forest uses the defaults from \code{randomForest} and then 
+predicted values are computed for all of the events in \code{x}. If the 
+predicted probability for the label type is greater than 0.5, the label is 
+changed to the specified type. However, if an observation already has a 
+label other than 'cell' in the \code{label} variable, it will not be changed. 
+The predicted probabilities for all of the observations are stored in the 
 variable associated with that type in the \code{probs} object of \code{x}
 for further analysis. Thus, it is possible to have a probability greater 
 than 0.5 for 'debris' but still have a label of 'bead' if an observation 

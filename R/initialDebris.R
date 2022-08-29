@@ -1,4 +1,4 @@
-#' Preliminary debris classification.
+#' Preliminary debris classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
 #' @param score A value of 1, 2, or 3 that specifies the debris score that 
@@ -62,14 +62,17 @@ initialDebris <- function(x, score = 1, standardize = TRUE) {
     
     if (score == 1) {
         x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
-                                xs[, "Event_length"] - xs[, "Center"] - 
-                                xs[, "Width"] + xs[, "Offset"])
+                                              xs[, "Event_length"] - 
+                                              xs[, "Center"] - 
+                                              xs[, "Width"] + 
+                                              xs[, "Offset"])
     } else if (score == 2) {
-        x$scores[, "debrisScore"] <- xs[, "Residual"] + xs[, "Offset"] - 2.0 * xs[, "DNA1"] -
-            2.0 * xs[, "DNA2"] - xs[, "Event_length"] - xs[, "Center"] - 
-            0.5 * xs[, "Width"]
+        x$scores[, "debrisScore"] <- xs[, "Residual"] + xs[, "Offset"] - 
+            2.0 * xs[, "DNA1"] - 2.0 * xs[, "DNA2"] - xs[, "Event_length"] - 
+            xs[, "Center"] - 0.5 * xs[, "Width"]
     } else if (score == 3) {
-        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + xs[, "Event_length"])
+        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
+                                              xs[, "Event_length"])
     } else {
         stop("Invalid score selection. Must be 1, 2, or 3.")
     }

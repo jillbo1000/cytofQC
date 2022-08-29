@@ -1,4 +1,4 @@
-#' Preliminary viability classification.
+#' Preliminary viability classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
 #' @param dna If TRUE, the DNA will be used to determine viability.
@@ -72,7 +72,7 @@ initialDead <- function(x, dna = FALSE, standardize = TRUE) {
     unclassified.ind <- which(x$label == "cell")
     
     viability <- xs[, grep("Viability", colnames(x$tech))]
-
+    
     if (ncol(data.frame(viability)) > 1) {
         viability <- rowSums(viability, na.rm = TRUE)
     } 

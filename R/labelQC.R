@@ -35,16 +35,17 @@
 #' sce <- labelQC(sce)
 #'
 #' @export
-labelQC <- function(x, model = "svm", types = c("bead", "doublet", "debris", "dead"), 
+labelQC <- function(x, model = "svm", 
+                    types = c("bead", "doublet", "debris", "dead"), 
                     nTrain = 4000, loss = "auc") {
-
+    
     types <- tolower(types)
     if (length(setdiff(types, c("bead", "doublet", "debris", "dead")))) {
         stop("types must be either 'bead', 'doublet', 'debris', or 'dead'.")
     }
     
     xs <- scale(x$tech)
-
+    
     loss <- tolower(loss)
     if (loss != "auc" & loss != "class") {
         warning("Invalid loss specified. AUC used to tune model.")
