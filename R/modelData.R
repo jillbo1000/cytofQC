@@ -48,8 +48,8 @@ modelData <- function(x, type = c("bead", "doublet", "debris", "dead"),
                              x$label == "cell"]
     if (length(poss.ind) < n * 2) {
         n <- 0.5 * length(poss.ind)
-        warning(paste("Fewer than n/2 points in dataset. ", n, 
-                      " points used in training set."))
+        warning("Fewer than n/2 points in dataset. ", n, 
+                " points used in training set.")
     }
     
     poss.wt <- ifelse(x$initial[, grep(type, 

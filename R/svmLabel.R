@@ -69,7 +69,7 @@ svmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"),
     
     if (sum(x$initial[index, grep(type, colnames(x$initial))] == -1) < 100 | 
         sum(x$initial[index, grep(type, colnames(x$initial))] == 1) < 100) {
-        warning(paste("Not enough ", type, " or non-", type, "to build model."))
+        warning("Not enough ", type, " or non-", type, "to build model.")
         pred <- rep(0, nrow(xs))
     } else {
         svmTune <- EZtune::eztune(x = xs[index, ], 

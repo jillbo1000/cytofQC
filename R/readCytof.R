@@ -147,16 +147,16 @@ readCytof <- function(file.name,
     
     if(verbose){
         # summary of channels found
-        cat('Bead channels (', ncol(bead_channels), '): ', 
+        message('Bead channels (', ncol(bead_channels), '): ', 
             paste(rownames(sce)[rownames(sce) %in% beads], collapse = ', '),
             '\n', sep = '')
-        cat('DNA channels (', ncol(dna_channels), '): ', 
+        message('DNA channels (', ncol(dna_channels), '): ', 
             paste(rownames(sce)[rownames(sce) %in% dna], collapse = ', '), 
             '\n', sep = '')
-        cat('Viability channels (', ncol(perm_channels), '): ', 
+        message('Viability channels (', ncol(perm_channels), '): ', 
             paste(rownames(sce)[rownames(sce) %in% viability], collapse = ', '),
             '\n', sep = '')
-        cat('Gaussian parameters (', ncol(gauss), '): ', 
+        message('Gaussian parameters (', ncol(gauss), '): ', 
             paste(names(int_colData(sce))[names(int_colData(sce)) %in% 
                                               c(event_length, gaussian)], 
                   collapse = ', '),
