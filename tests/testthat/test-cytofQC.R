@@ -27,6 +27,6 @@ test_that("basic functionality works", {
     suppressWarnings({ lab <- labelQC(tech, model = 'rf', nTrain = 500) })
     expect_equal(nrow(lab), 49)
     # expect_equal(names(lab), c('Time','label','bead','doublet','debris','dead'))
-    expect_equivalent(table(lab$label)['gdpZero'], 1060)
+    expect_equivalent(table(lab$label)['gdpZero'], 300)
     
 })
