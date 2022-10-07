@@ -6,3 +6,4 @@
 ^\.github$
 ^vignettes/cytofQC_cache/*$
 ^vignettes/workflow_cache/*$
+
