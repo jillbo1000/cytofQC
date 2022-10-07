@@ -12,7 +12,7 @@ vignette: >
 This is a description of the workflow for `cytofQC`, which applies QC labels to each observation in a CyTOF dataset. The Quick Start section shows how to read in data from FCS files and use the general function `labelQC` to obtain labels for all of the observations. We then demonstrate the inner workings of the function to illustrate how it works for each observation type and show how to use the individual modeling functions that make up `labelQC`. We then end with a demonstration of how the labeled data cluster using UMAP. 
 
 
-```{r, include = FALSE}
+```{r intro, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>", 
@@ -35,7 +35,7 @@ library(gridExtra)
 
 The function `readCytof` read in the data and returns a `SingleCellExperiment` that contains all of the QC variables and place holders for the labels, event scores, initial classification, and event probabilities. The original data is stored in the `SingleCellExperiment` using the format used in `CATALYST`. The function for reading in the file requires that the names of the QC variables are identified. The function `prepData` from `CATALYST` can be used to identify the names of the QC variables. 
 
-```{r}
+```{r data1}
 f <- system.file("extdata", "raw_cytof.fcs", package = "cytofQC")
 x <- prepData(f)
 names(int_colData(x))
@@ -63,7 +63,7 @@ The function `readCytof` adds four `DataFrames` that are place holders for the `
 `probs`: Initially filled with NA. The predicted probability from the model classifying each event type is recorded in this `DataFrame`. The labels are assigned in order. That is, once an event is classified as a bead, it cannot be classified as a different event type. The probabilities in this `DataFrame` can be used to identify events that look similar to another event type. 
 
 
-```{r}
+```{r viewData}
 head(x$tech)
 head(x$label)
 head(x$scores)
@@ -75,7 +75,7 @@ head(x$probs)
 
 The integral function of cytofQC is `labelQC`. A `SingleCellExperiment` obtained from `readCytof` can be passed to `labelQC` with no other arguments and it will return a `data.frame` that contains all of the labels and the probability that each observation belongs to each of the specified labels. The following call will label the cells using a support vector machine and 4000 data points to train the SVM for each event type. If there are not 2000 events with a -1 or 1 initial classification assignment a warning is given and a smaller dataset is used to train the data. Note that this dataset does not appear to have any dead cells.  
 
-```{r}
+```{r labelQC}
 x <- labelQC(x)
 table(x$label)
 head(x$scores)
@@ -83,27 +83,28 @@ head(x$initial)
 head(x$probs)
 ```
 
-Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. A plot os not done for the dead scores because none of the events are classified as dead. 
+Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. The package includes four `get` functions that retrieve the various results of the labels. The four functions are `get_score`, `get_prob`, `get_labels`, and `get_tech`. The functions `get_score` and `get_prob` can return the vector of scores or probabilities for a specific event type ('bead', 'dead', 'debris', or 'doublet') or can return the entire `DataFrame` containing all of the scores or probabilities. The function `get_labels` returns a character vector containing all of the label assignments and `get_tech` returns the `DataFrame` containing all of the data used to label the events. 
+Note that a plot is not done for the dead scores because none of the events in the example dataset are classified as dead. 
 
-```{r}
-bead <- cytofHist(x$scores$beadScore, x$label, title = "Bead score")
-debris <- cytofHist(x$scores$debrisScore, x$label, title = "Debris score")
-doublet <- cytofHist(x$scores$doubletScore, x$label, title = "Doublet score")
+```{r cytofHist}
+bead <- cytofHist(get_score(x, type = 'bead'), get_labels(x), title = "Bead score")
+debris <- cytofHist(get_score(x, type = 'debris'), get_labels(x), title = "Debris score")
+doublet <- cytofHist(get_score(x, type = 'doublet'), get_labels(x), title = "Doublet score")
 grid.arrange(bead, debris, doublet, ncol = 1)
 ```
 
 It can be difficult to see some of the less represented event types. The argument type = "density" creates a histogram where each of the groups are represented by the same area instead of by count so that small groups are visible. 
 
-```{r}
-bead <- cytofHist(x$scores$beadScore, x$label, type = "density", title = "Bead score")
-debris <- cytofHist(x$scores$debrisScore, x$label, type = "density", title = "Debris score")
-doublet <- cytofHist(x$scores$doubletScore, x$label, type = "density", title = "Doublet score")
+```{r cytofHist_density}
+bead <- cytofHist(get_score(x, type = 'bead'), get_labels(x), type = "density", title = "Bead score")
+debris <- cytofHist(get_score(x, type = 'debris'), get_labels(x), type = "density", title = "Debris score")
+doublet <- cytofHist(get_score(x, type = 'doublet'), get_labels(x), type = "density", title = "Doublet score")
 grid.arrange(bead, debris, doublet, ncol = 1)
 ```
 
 Labeling can be done using a random forest or gradient boosting machine as well. The following code shows how to generate labels with a random forest or gradient boosting machine using classification error as a loss function. 
 
-```{r eval = FALSE}
+```{r rf_gbm, eval = FALSE}
 x.rf <- labelQC(x, model = "rf", loss = "class")
 x.gbm <- labelQC(x, model = "gbm", loss = "class")
 ```
@@ -116,7 +117,7 @@ Each of the event types can be modeled separately outside of `labelQC`. The foll
 
 The beads are typically the first type of observation that should be labeled. The beads should separate clearly from the non-beads. The first step is to obtain initial labels for the beads. This is done with the `initialBead` function. The function returns a `SingleCellExperiment` that contains the bead assignment for each observation in the `scores` object and an initial classification that in the `initial` object. This information is then used to assign a label of `bead` to observations that look like beads. The predicted probability returned by the classification model is reported in the `probs` object and indicates how much each observation looks like a bead.
 
-```{r}
+```{r label_beads}
 x <- readCytof(f, 
                  beads = c("Bead"),
                  dna = c("DNA1", "DNA2"),
@@ -134,7 +135,7 @@ x <- svmLabel(x, type = "bead", n = 500)
 
 The debris are typically classified after the beads. They are identified primarily by low DNA content and short event time. Labeling debris prior to doublets aids in identifying doublets. 
 
-```{r}
+```{r label_debris}
 x <- initialDebris(x)
 x <- svmLabel(x, type = "debris", n = 500)
 
@@ -145,7 +146,7 @@ x <- svmLabel(x, type = "debris", n = 500)
 
 Doublets are more difficult to identify than beads or debris so it is recommended that they are labeled prior to labeling doublets.
 
-```{r}
+```{r label_doublets}
 x <- initialDoublet(x)
 x <- svmLabel(x, type = "doublet", n = 500)
 
@@ -157,7 +158,7 @@ Viability is not as straightforward as many CyTOF data cleaning sites indicate. 
 
 Note that this produces a warning that there are not enough dead or non-dead cells to build a classification model for viability. This is because fewer than 100 points were classified as dead cells by the `initialDead` function. Thus, none of the observations will be labeled "dead" in \code{x}.
 
-```{r}
+```{r label_dead}
 x <- initialDead(x)
 x <- svmLabel(x, type = "dead", n = 500)
 
@@ -167,7 +168,7 @@ x <- svmLabel(x, type = "dead", n = 500)
 
 The following is a UMAP that was created using only the `tech` data and colored with the labels from `cytofQC`. Note that the labels from `cytofQC` match the clusters in the UMAP and that neither they nor the scores were used to generate the UMAP.  
 
-```{r}
+```{r umap}
 library(uwot)
 lab.umap <- umap(scale(x$tech), ret_model = TRUE)
 lab.umapD <- data.frame(x = lab.umap$embedding[, 1], 
@@ -175,7 +176,7 @@ lab.umapD <- data.frame(x = lab.umap$embedding[, 1],
                         labs = x$label)
 ```
 
-```{r}
+```{r plot_umap}
 library(RColorBrewer)
 ggplot(lab.umapD, aes(x = x, y = y)) +
     geom_point(aes(color = labs), size = 0.5, alpha = 0.5) +
@@ -186,7 +187,7 @@ ggplot(lab.umapD, aes(x = x, y = y)) +
 ```
 
 # SessionInfo
-```{r}
+```{r session_info}
 library(utils)
 sessionInfo()
 ```

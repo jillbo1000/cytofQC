@@ -1,8 +1,8 @@
-.Rproj
+cytofQC.Rproj
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
 /Meta/
 vignettes/workflow_cache
-vignettes/vignette_cache
+vignettes/cytofQC_cache
