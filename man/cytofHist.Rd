@@ -4,7 +4,7 @@
 \alias{cytofHist}
 \title{Returns histogram for grouped data}
 \usage{
-cytofHist(x, group, type = "count", na.rm = FALSE, title = NULL)
+cytofHist(x, group, type = c("count", "density"), na.rm = FALSE, title = NULL)
 }
 \arguments{
 \item{x}{Numeric vector of values that will be plotted.}
@@ -34,6 +34,6 @@ Returns histogram for grouped data
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 sce <- labelQC(sce)
-cytofHist(sce$scores$beadScore, sce$label)
+cytofHist(scores(sce, 'bead'), label(sce))
 
 }

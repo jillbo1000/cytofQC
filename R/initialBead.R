@@ -29,11 +29,15 @@
 #' data("raw_data", package = "CATALYST")
 #' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' sce <- initialBead(sce)
-#' head(sce$scores)
-#' head(sce$initial)
+#' head(scores(sce))
+#' head(initial(sce))
 #'
 #' @export
 initialBead <- function(x) {
+    
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
+    }
     
     unclassified.ind <- which(x$label == "cell")
     bead_channels <- grep("Bead", colnames(x$tech))

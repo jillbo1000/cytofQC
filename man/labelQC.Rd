@@ -6,10 +6,10 @@
 \usage{
 labelQC(
   x,
-  model = "svm",
-  types = c("bead", "doublet", "debris", "dead"),
+  model = c("svm", "rf", "gbm"),
+  type = c("all", "bead", "doublet", "debris", "dead"),
   nTrain = 4000,
-  loss = "auc"
+  loss = c("auc", "class")
 )
 }
 \arguments{
@@ -21,7 +21,7 @@ interest.}
 "svm" for a support vector machine, "gbm" for a gradient boosting
 machine, or "rf" for a random forest.}
 
-\item{types}{Types of to model. Options are "bead", "doublet", 
+\item{type}{Types of events to model. Options are "all", "bead", "doublet", 
 "debris", and "dead".}
 
 \item{nTrain}{The (maximum) number of data points to use when training a
@@ -54,5 +54,6 @@ classifying the debris.
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 sce <- labelQC(sce)
+table(label(sce))
 
 }

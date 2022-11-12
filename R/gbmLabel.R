@@ -42,26 +42,25 @@
 #' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 #' sce <- initialBead(sce)
 #' sce <- gbmLabel(sce, type = "bead", loss = "auc")
+#' head(probs(sce))
+#' table(label(sce))
 #' 
 #' @export
 gbmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"), 
-                     loss = "auc", n = 4000, standardize = TRUE) {
+                     loss = c("auc", "class"), n = 4000, standardize = TRUE) {
     
-    type <- tolower(type)
-    if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
-        stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
     }
+    
+    type <- match.arg(tolower(type), choices = c("bead", "debris", 
+                                                 "doublet", "dead"))
+    loss <- match.arg(tolower(loss), c("auc", "class"))
     
     if (standardize) {
         xs <- scale(x$tech)
     } else {
         xs <- x$tech
-    }
-    
-    loss <- tolower(loss)
-    if (loss != "auc" & loss != "class") {
-        warning("Invalid loss specified. AUC used to tune model.")
-        loss <- "auc"
     }
     
     index <- modelData(x, type = type)
@@ -101,5 +100,4 @@ gbmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"),
                                          type, "cell")
     
     x
-    
 }

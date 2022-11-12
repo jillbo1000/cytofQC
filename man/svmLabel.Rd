@@ -8,7 +8,7 @@ machine}
 svmLabel(
   x,
   type = c("bead", "doublet", "debris", "dead"),
-  loss = "auc",
+  loss = c("auc", "class"),
   n = 4000,
   standardize = TRUE
 )
@@ -65,5 +65,6 @@ data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 sce <- initialBead(sce)
 sce <- svmLabel(sce, type = "bead", loss = "auc")
+table(label(sce))
 
 }

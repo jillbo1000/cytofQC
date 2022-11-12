@@ -163,9 +163,18 @@
 #' data("raw_data", package = "CATALYST")
 #' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 #' sce <- initialDoublet(sce)
-#' cytofQC:::initialGuess(sce$scores$doubletScore)
+#' fit <- initialGuess(scores(sce, "doublet"))
 #' 
-initialGuess <- function(x, middleGroup = 0){
+#' @export
+initialGuess <- function(x, middleGroup = c(0, -1, 1)){
+    
+    if (!methods::is(x, "numeric")) {
+        stop("x must be a numeric vector")
+    }
+    
+    middleGroup <- as.numeric(match.arg(as.character(middleGroup), 
+                                        c("0", "-1", "1")))
+
     d <- density(x[which(x > min(x))]) 
     cut <- d$x[which.max(d$y)]
     xx <- x[x >= cut]

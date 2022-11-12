@@ -57,11 +57,15 @@
 #' sce <- initialDebris(sce)
 #' sce <- initialDoublet(sce)
 #' sce <- initialDead(sce)
-#' head(sce$scores)
-#' head(sce$initial)
+#' head(scores(sce))
+#' head(initial(sce))
 #'
 #' @export
 initialDead <- function(x, dna = FALSE, standardize = TRUE) {
+    
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
+    }
     
     if (standardize) {
         xs <- scale(x$tech)

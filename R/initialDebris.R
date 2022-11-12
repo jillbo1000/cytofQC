@@ -46,11 +46,17 @@
 #' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' sce <- initialBead(sce)
 #' sce <- initialDebris(sce)
-#' head(sce$scores)
-#' head(sce$initial)
+#' head(scores(sce))
+#' head(initial(sce))
 #'
 #' @export
-initialDebris <- function(x, score = 1, standardize = TRUE) {
+initialDebris <- function(x, score = c(1, 2, 3), standardize = TRUE) {
+    
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
+    }
+    
+    score <- match.arg(as.character(score), c("1", "2", "3"))
     
     if (standardize) {
         xs <- scale(x$tech)
@@ -60,22 +66,20 @@ initialDebris <- function(x, score = 1, standardize = TRUE) {
     
     unclassified.ind <- which(x$label == "cell")
     
-    if (score == 1) {
+    if (score == "1") {
         x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
                                               xs[, "Event_length"] - 
                                               xs[, "Center"] - 
                                               xs[, "Width"] + 
                                               xs[, "Offset"])
-    } else if (score == 2) {
+    } else if (score == "2") {
         x$scores[, "debrisScore"] <- xs[, "Residual"] + xs[, "Offset"] - 
             2.0 * xs[, "DNA1"] - 2.0 * xs[, "DNA2"] - xs[, "Event_length"] - 
             xs[, "Center"] - 0.5 * xs[, "Width"]
-    } else if (score == 3) {
+    } else if (score == "3") {
         x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
                                               xs[, "Event_length"])
-    } else {
-        stop("Invalid score selection. Must be 1, 2, or 3.")
-    }
+    } 
     
     g <- initialGuess(x$scores$debrisScore[unclassified.ind], middleGroup = 1)
     x$initial$debrisInitial[unclassified.ind] <- g$label

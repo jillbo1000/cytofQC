@@ -39,16 +39,21 @@
 #' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 #' sce <- initialBead(sce)
 #' sce <- svmLabel(sce, type = "bead", loss = "auc")
+#' head(probs(sce))
+#' table(label(sce))
 #'
 #' @export
 s3vmLabel <- function(x, type = c("bead", "doublet", "debris", "dead"), 
-                      loss = "auc", n = 4000, standardize = TRUE) {
+                      loss = c("auc", "class"), n = 4000, standardize = TRUE) {
     
     
-    type <- tolower(type)
-    if (!(type %in% c("bead", "doublet", "debris", "dead"))) {
-        stop("type must be either 'bead', 'doublet', 'debris', or 'dead'.")
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
     }
+    
+    type <- match.arg(tolower(type), choices = c("bead", "debris", 
+                                                 "doublet", "dead"))
+    loss <- match.arg(tolower(loss), c("auc", "class"))
     
     if (standardize) {
         xs <- scale(x$tech)

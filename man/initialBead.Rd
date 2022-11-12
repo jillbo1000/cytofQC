@@ -40,7 +40,7 @@ should show a clear, small peak that represents the beads.
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 sce <- initialBead(sce)
-head(sce$scores)
-head(sce$initial)
+head(scores(sce))
+head(initial(sce))
 
 }

@@ -4,7 +4,7 @@
 \alias{initialDebris}
 \title{Preliminary debris classification}
 \usage{
-initialDebris(x, score = 1, standardize = TRUE)
+initialDebris(x, score = c(1, 2, 3), standardize = TRUE)
 }
 \arguments{
 \item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}}.}
@@ -59,7 +59,7 @@ data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 sce <- initialBead(sce)
 sce <- initialDebris(sce)
-head(sce$scores)
-head(sce$initial)
+head(scores(sce))
+head(initial(sce))
 
 }

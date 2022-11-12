@@ -4,7 +4,7 @@
 \alias{initialDoublet}
 \title{Preliminary doublet classification}
 \usage{
-initialDoublet(x, score = 1, standardize = TRUE)
+initialDoublet(x, score = c(1, 2, 3), standardize = TRUE)
 }
 \arguments{
 \item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}}.}
@@ -60,7 +60,7 @@ sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 sce <- initialBead(sce)
 sce <- initialDebris(sce)
 sce <- initialDoublet(sce)
-head(sce$scores)
-head(sce$initial)
+head(scores(sce))
+head(initial(sce))
 
 }

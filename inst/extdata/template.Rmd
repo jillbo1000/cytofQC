@@ -32,7 +32,6 @@ cbind(count = table(labels),
       percent = round(100 * table(labels) / length(labels), digits = 2))
 ```
 
-## Technical UMAP
 
 ```{r umap}
 if(params$runUMAP){

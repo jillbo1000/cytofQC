@@ -4,7 +4,7 @@
 \alias{initialGuess}
 \title{General preliminary classification.}
 \usage{
-initialGuess(x, middleGroup = 0)
+initialGuess(x, middleGroup = c(0, -1, 1))
 }
 \arguments{
 \item{x}{The score (ie. debris score, doublet score, etc.) to be used for
@@ -32,6 +32,6 @@ General preliminary classification.
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 sce <- initialDoublet(sce)
-cytofQC:::initialGuess(sce$scores$doubletScore)
+fit <- initialGuess(scores(sce, "doublet"))
 
 }

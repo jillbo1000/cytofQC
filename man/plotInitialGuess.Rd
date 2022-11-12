@@ -4,7 +4,12 @@
 \alias{plotInitialGuess}
 \title{Plot preliminary classification from initialGuess}
 \usage{
-plotInitialGuess(x, IG = NULL, fit = NULL)
+plotInitialGuess(
+  x,
+  IG = NULL,
+  fit = NULL,
+  type = c("both", "full", "truncated")
+)
 }
 \arguments{
 \item{x}{The score (ie. debris score, doublet score, etc.) to be used for
@@ -18,6 +23,10 @@ function that contains the fitted values.}
 plotted. Otherwise, a numeric value of 1, 2, or 3 can be be selected to 
 plot single normal fit, mixture of two normals, or the mixture of three
 normals as fit by \code{initialGuess}.}
+
+\item{type}{Type of graph to be plotted. If 'truncated' is selected, only 
+half of the first normal distribution will be plotted. If 'both' is 
+selected, both the truncated and full plot will be plotted.}
 }
 \value{
 A histogram that shows the score with the mixture of normal 
@@ -30,6 +39,7 @@ Plot preliminary classification from initialGuess
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 sce <- initialDoublet(sce)
-cytofQC:::plotInitialGuess(sce$scores$doubletScore)
+plotInitialGuess(scores(sce, "doublet"), type = "both")
+plotInitialGuess(scores(sce, "doublet"), type = "truncated")
 
 }

@@ -47,12 +47,18 @@
 #' sce <- initialBead(sce)
 #' sce <- initialDebris(sce)
 #' sce <- initialDoublet(sce)
-#' head(sce$scores)
-#' head(sce$initial)
+#' head(scores(sce))
+#' head(initial(sce))
 #'
 #' @export
-initialDoublet <- function(x, score = 1, standardize = TRUE) {
+initialDoublet <- function(x, score = c(1, 2, 3), standardize = TRUE) {
     
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
+    }
+    
+    score <- match.arg(as.character(score), c("1", "2", "3"))
+
     if (standardize) {
         xs <- scale(x$tech)
     } else {
@@ -61,22 +67,20 @@ initialDoublet <- function(x, score = 1, standardize = TRUE) {
     
     unclassified.ind <- which(x$label == "cell")
     
-    if (score == 1) {
+    if (score == "1") {
         x$scores[, "doubletScore"] <- xs[, "DNA1"] + xs[, "DNA2"] + 
             xs[, "Residual"] + xs[, "Event_length"] - xs[, "Offset"] - 
             0.5 * xs[, "Width"]
-    } else if (score == 2) {
+    } else if (score == "2") {
         x$scores[, "doubletScore"] <- xs[, "DNA1"] + xs[, "DNA2"] + 
             xs[, "Residual"] + xs[, "Event_length"] - xs[, "Offset"] - 
             0.5 * xs[, "Width"] + abs(xs[, "Center"])
-    } else if (score == 3) {
+    } else if (score == "3") {
         x$scores[, "doubletScore"] <- 0.3 * (xs[, "DNA1"] + xs[, "DNA2"] +
                                                  xs[, "Event_length"]) + 
             xs[, "Residual"] + xs[, "Center"] + 
             (max(xs[, "Offset"]) - xs[, "Offset"])
-    } else {
-        stop("Invalid score selection")
-    }
+    } 
     
     g <- initialGuess(x$scores$doubletScore[unclassified.ind], middleGroup = 1)
     x$initial$doubletInitial[unclassified.ind] <- g$label

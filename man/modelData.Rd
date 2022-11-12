@@ -12,7 +12,8 @@ with the scores and initial columns filled out for the event type of
 interest.}
 
 \item{type}{Identifies the type of label that is being modeled. Must
-be 'bead', 'doublet', 'debris', or 'dead'.}
+be 'bead', 'doublet', 'debris', or 'dead'. Note that if no type of 
+label is specified 'bead' will be used.}
 
 \item{n}{number of indices to return.}
 }
@@ -29,7 +30,7 @@ The indices that are returned by \code{modelData} are be used to
 create a model that can be used to classify the observations with
 regard to the parameter of interest (bead, doublet, debris, dead).
 It is used as part of \code{gbmLabel}, \code{rfLabel}, 
-\code{svmLable}, and \code{labelQC}. The function \code{mocelData} 
+\code{svmLable}, and \code{labelQC}. The function \code{modelData} 
 uses the score and the function \code{initialGuess} to randomly select
 a set of data points that we are confident are of the event type and 
 not of the selected event type that can be used to train the data. Only

@@ -6,7 +6,7 @@
 #' @param model Type of model to use to do the labeling. Options are 
 #' "svm" for a support vector machine, "gbm" for a gradient boosting
 #' machine, or "rf" for a random forest.
-#' @param types Types of to model. Options are "bead", "doublet", 
+#' @param type Types of events to model. Options are "all", "bead", "doublet", 
 #' "debris", and "dead".
 #' @param nTrain The (maximum) number of data points to use when training a
 #'   model to predict event types.
@@ -33,17 +33,24 @@
 #' data("raw_data", package = "CATALYST")
 #' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
 #' sce <- labelQC(sce)
+#' table(label(sce))
 #'
 #' @export
-labelQC <- function(x, model = "svm", 
-                    types = c("bead", "doublet", "debris", "dead"), 
-                    nTrain = 4000, loss = "auc") {
+labelQC <- function(x, model = c("svm", "rf", "gbm"), 
+                    type = c("all", "bead", "doublet", "debris", "dead"), 
+                    nTrain = 4000, loss = c("auc", "class")) {
     
-    types <- tolower(types)
-    if (length(setdiff(types, c("bead", "doublet", "debris", "dead")))) {
-        stop("types must be either 'bead', 'doublet', 'debris', or 'dead'.")
+    if (!methods::is(x, "SingleCellExperiment")) {
+        stop("x must be an object created with readCytof")
     }
     
+    model <- match.arg(tolower(model), c("svm", "rf", "gbm"))
+    types <- match.arg(tolower(type), choices = c("all", "bead", "debris", 
+                                                 "doublet", "dead"), 
+                       several.ok = TRUE)
+    if ("all" %in% types) types <- c("bead", "doublet", "debris", "dead")
+    loss <- match.arg(tolower(loss), c("auc", "class"))
+
     xs <- scale(x$tech)
     
     loss <- tolower(loss)

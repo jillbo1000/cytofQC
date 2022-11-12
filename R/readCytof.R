@@ -149,18 +149,19 @@ readCytof <- function(file.name,
         # summary of channels found
         message('Bead channels (', ncol(bead_channels), '): ', 
                 paste(rownames(sce)[rownames(sce) %in% beads], collapse = ', '),
-                '\n', sep = '')
-        message('DNA channels (', ncol(dna_channels), '): ', 
+                '\n', 
+                'DNA channels (', ncol(dna_channels), '): ', 
                 paste(rownames(sce)[rownames(sce) %in% dna], collapse = ', '), 
-                '\n', sep = '')
-        message('Viability channels (', ncol(perm_channels), '): ', 
+                '\n', 
+                'Viability channels (', ncol(perm_channels), '): ', 
                 paste(rownames(sce)[rownames(sce) %in% viability], collapse = ', '),
-                '\n', sep = '')
-        message('Gaussian parameters (', ncol(gauss), '): ', 
+                '\n',
+                'Gaussian parameters (', ncol(gauss), '): ', 
                 paste(names(int_colData(sce))[names(int_colData(sce)) %in% 
                                                   c(event_length, gaussian)], 
                       collapse = ', '),
                 sep = '')
+        
     }
     
     labels <- rep("cell", nrow(gauss))

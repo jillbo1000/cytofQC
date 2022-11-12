@@ -70,7 +70,7 @@ sce <- initialBead(sce)
 sce <- initialDebris(sce)
 sce <- initialDoublet(sce)
 sce <- initialDead(sce)
-head(sce$scores)
-head(sce$initial)
+head(scores(sce))
+head(initial(sce))
 
 }

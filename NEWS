@@ -1,3 +1,22 @@
+Changes in version 0.99.3 (2022-11-11)
+
++ Resubmitted to Bioconductor
+
+* Added script to inst/script that demonstrates how extdata was created
+* Deleted doc folder and contents
+* Added a man level page for cytofQC
+* Added relavence to Bioconductor on vignette
+* Added functions tech, scores, probs, initial, and label to replace 
+  previous get functions that performed the same function to be more 
+  consistent with Bioconductor syntax 
+* Added match.arg and checks for datatypes to all relavent functions
+* Removed plotInitialGuess2 and added argument to plotInitialGuess to
+  choose if one or both graphs are plotted
+* Cleaned up warning and message statements
+
+
 Changes in version 0.99.0 (2022-09-13)
 
 + Submitted to Bioconductor
+
+

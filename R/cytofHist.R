@@ -21,10 +21,17 @@ NULL
 #' data("raw_data", package = "CATALYST")
 #' sce <- readCytof(raw_data, beads = 'Beads', viability = c('cisPt1','cisPt2'))
 #' sce <- labelQC(sce)
-#' cytofHist(sce$scores$beadScore, sce$label)
+#' cytofHist(scores(sce, 'bead'), label(sce))
 #' 
 #' @export
-cytofHist <- function(x, group, type = "count", na.rm = FALSE, title = NULL) {
+cytofHist <- function(x, group, type = c("count", "density"), na.rm = FALSE, 
+                      title = NULL) {
+    
+    if (!methods::is(x, "numeric")) {
+        stop("x must be a numeric vector")
+    }
+    
+    type <- match.arg(tolower(type), choices = c("count", "density"))
     
     tmp <- data.frame(x, group = group)
     cols <- c("#69b3a2", "#404080", "#80b1d3", "#d4b9da", "#fdd0a2")

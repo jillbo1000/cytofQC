@@ -1,0 +1,68 @@
+---
+title: "creation of extdata"
+author: "Jill Lundell"
+date: "2022-11-11"
+output: BiocStyle::html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Data creation method
+
+Data were aquired from the public flow repository FR-FCM-Z29V and uploaded by
+Charles Bagwell on 2022-09-22. The web address is
+https://flowrepository.org/id/FR-FCM-Z29V. The file used  to create
+*extdata* is REP_1_deid.fcs.
+
+The original fcs file was read in with *readCytof* and then labeled
+with \code{labelQC} using the default settings. The dataset was then subset
+using the labels to ensure it was sufficiently small to meet
+Bioconductor requirements and still include enough of each type of
+event to be informative in the vignette. 
+
+Read in the data using *readCytof* and then label the events as follows:
+
+```{r label, eval = FALSE}
+library(cytofQC)
+
+file.name <- "path_to_file/REP_1_deid.fcs"
+
+x <- readCytof(file.name, 
+                 beads = c("Bead"),
+                 dna = c("DNA1", "DNA2"),
+                 event_length = "Event_length",
+                 viability = "Live_Dead",
+                 gaussian = c("Center", "Offset", "Width", "Residual"))
+
+x <- labelQC(x)
+
+table(label(x))
+```
+
+Subset the data using the labels as follows: 
+
+```{r subset, eval = FALSE}
+bead <- sample(seq_along(label(x))[label(x) == "bead"], 150)
+cell <- sample(seq_along(label(x))[label(x) == "cell"], 5000)
+debris <- sample(seq_along(label(x))[label(x) == "debris"], 600)
+doublet <- sample(seq_along(label(x))[label(x) == "doublet"], 400)
+gdpZero <- sample(seq_along(label(x))[label(x) == "gdpZero"], 300)
+
+index <- sort(c(bead, cell, debris, doublet, gdpZero))
+```
+
+The data were then subset and saved as an fcs file using the *flowCore* package.
+
+```{r export, eval = FALSE}
+library(flowCore)
+extdata <- read.FCS(file.name, which.lines = index)
+write.FCS(extdata, "extdata.fcs")
+```
+
+# References: 
+
+Bagwell, Charles Bruce, et al. "Automated data cleanup for mass cytometry." Cytometry Part A 97.2 (2020): 184-198.
+
+Spidlen, Josef, Karin Breuer, and Ryan Brinkman. "Preparing a Minimum Information about a Flow Cytometry Experiment (MIFlowCyt) compliant manuscript using the International Society for Advancement of Cytometry (ISAC) FCS file repository (FlowRepository. org)." Current protocols in cytometry 61.1 (2012): 10-18.

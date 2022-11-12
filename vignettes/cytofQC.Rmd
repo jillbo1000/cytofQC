@@ -9,7 +9,9 @@ vignette: >
 
 # Introduction
 
-This is a description of the workflow for `cytofQC`, which applies QC labels to each observation in a CyTOF dataset. The Quick Start section shows how to read in data from FCS files and use the general function `labelQC` to obtain labels for all of the observations. We then demonstrate the inner workings of the function to illustrate how it works for each observation type and show how to use the individual modeling functions that make up `labelQC`. We then end with a demonstration of how the labeled data cluster using UMAP. 
+This is a description of the workflow for `cytofQC`, which applies QC labels to each observation in a CyTOF dataset. Although other packages on Bioconductor can work with CyTOF data, `cytofQC` is the only package that uses a model based and labeling approach to cleaning CyTOF data. `CATALYST` does data normalization using bead normalization and can remove identified beads from the data. It also has many other functions, but it does not clean out debris, doublets, or dead cells. Other Bioconductor packages that analyze CyTOF data assume that data have been cleaned prior to using their package. Our package does not replicate the features of any Bioconductor packages. It uses a statistical learning approach to label each event in a CyTOF dataset as a cell, gdpZero (has a 0 value for at least one Gaussian parameter) bead, debris, doublet, or dead event. Data are stored as a `SingleCellExperiment` along with the labels and other types of information that help data users interpret the labels. Our method is able to distinguish between doublets and large cells, something that other cleaning methods struggle to do. 
+
+The Quick Start section shows how to read in data from FCS files and use the general function `labelQC` to obtain labels for all of the observations. We then demonstrate the inner workings of the function to illustrate how it works for each observation type and show how to use the individual modeling functions that make up `labelQC`. We end with a demonstration of how the labeled data cluster using UMAP. 
 
 
 ```{r intro, include = FALSE}
@@ -21,6 +23,14 @@ knitr::opts_chunk$set(
   cache = TRUE
 )
 ```
+
+
+```{r eval = FALSE}
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.16")
+```
+
 
 ```{r setup}
 library(cytofQC)
@@ -64,11 +74,11 @@ The function `readCytof` adds four `DataFrames` that are place holders for the `
 
 
 ```{r viewData}
-head(x$tech)
-head(x$label)
-head(x$scores)
-head(x$initial)
-head(x$probs)
+head(tech(x))
+head(label(x))
+head(scores(x))
+head(initial(x))
+head(probs(x))
 ```
 
 ## Use labelQC to obtain labels for each obsevation
@@ -77,28 +87,28 @@ The integral function of cytofQC is `labelQC`. A `SingleCellExperiment` obtained
 
 ```{r labelQC}
 x <- labelQC(x)
-table(x$label)
-head(x$scores)
-head(x$initial)
-head(x$probs)
+table(label(x))
+head(scores(x))
+head(initial(x))
+head(probs(x))
 ```
 
-Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. The package includes four `get` functions that retrieve the various results of the labels. The four functions are `get_score`, `get_prob`, `get_labels`, and `get_tech`. The functions `get_score` and `get_prob` can return the vector of scores or probabilities for a specific event type ('bead', 'dead', 'debris', or 'doublet') or can return the entire `DataFrame` containing all of the scores or probabilities. The function `get_labels` returns a character vector containing all of the label assignments and `get_tech` returns the `DataFrame` containing all of the data used to label the events. 
+Histograms can be created using `cytofHist`. The function creates a histogram colored by groups. The following uses `cytofHist` to examine the event scores and how the labels relate to them. The package includes four `get` functions that retrieve the various results of the labels. The four functions are `scores`, `probs`, `label`, and `tech`. The functions `scores` and `probs` can return the vector of scores or probabilities for a specific event type ('bead', 'dead', 'debris', or 'doublet') or can return the entire `DataFrame` containing all of the scores or probabilities. The function `label` returns a character vector containing all of the label assignments and `tech` returns the `DataFrame` containing all of the data used to label the events. 
 Note that a plot is not done for the dead scores because none of the events in the example dataset are classified as dead. 
 
 ```{r cytofHist}
-bead <- cytofHist(get_score(x, type = 'bead'), get_labels(x), title = "Bead score")
-debris <- cytofHist(get_score(x, type = 'debris'), get_labels(x), title = "Debris score")
-doublet <- cytofHist(get_score(x, type = 'doublet'), get_labels(x), title = "Doublet score")
+bead <- cytofHist(scores(x, type = 'bead'), label(x), title = "Bead score")
+debris <- cytofHist(scores(x, type = 'debris'), label(x), title = "Debris score")
+doublet <- cytofHist(scores(x, type = 'doublet'), label(x), title = "Doublet score")
 grid.arrange(bead, debris, doublet, ncol = 1)
 ```
 
 It can be difficult to see some of the less represented event types. The argument type = "density" creates a histogram where each of the groups are represented by the same area instead of by count so that small groups are visible. 
 
 ```{r cytofHist_density}
-bead <- cytofHist(get_score(x, type = 'bead'), get_labels(x), type = "density", title = "Bead score")
-debris <- cytofHist(get_score(x, type = 'debris'), get_labels(x), type = "density", title = "Debris score")
-doublet <- cytofHist(get_score(x, type = 'doublet'), get_labels(x), type = "density", title = "Doublet score")
+bead <- cytofHist(scores(x, type = 'bead'), label(x), type = "density", title = "Bead score")
+debris <- cytofHist(scores(x, type = 'debris'), label(x), type = "density", title = "Debris score")
+doublet <- cytofHist(scores(x, type = 'doublet'), label(x), type = "density", title = "Doublet score")
 grid.arrange(bead, debris, doublet, ncol = 1)
 ```
 
