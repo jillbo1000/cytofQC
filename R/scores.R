@@ -94,10 +94,10 @@ tech <- function(x, type = c("all", "Bead", "DNA", "Viability",
         stop("x must be an object created with readCytof")
     }
     
-    type <- match.arg(tolower(type), choices = c("all", "Bead", "DNA", 
-                                                 "Viability", "Event_length", 
-                                                 "Center", "Offset", "Width", 
-                                                 "Residual"), 
+    type <- match.arg(tolower(type), choices = c("all", "bead", "dna", 
+                                                 "viability", "event_length", 
+                                                 "center", "offset", "width", 
+                                                 "residual"), 
                       several.ok = TRUE)
     
     if ("all" %in% type) {
