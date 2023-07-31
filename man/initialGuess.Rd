@@ -4,7 +4,7 @@
 \alias{initialGuess}
 \title{General preliminary classification.}
 \usage{
-initialGuess(x, middleGroup = c(0, -1, 1))
+initialGuess(x, middleGroup = c(0, -1, 1), bead = FALSE)
 }
 \arguments{
 \item{x}{The score (ie. debris score, doublet score, etc.) to be used for
@@ -15,6 +15,14 @@ predicting each event's label (eg. "doublet" vs. "cell").}
 middle group. Possible values are \code{-1} for "cell", \code{0} (default)
 for "indeterminate", and \code{1} for the event type of interest (eg.
 "doublet").}
+
+\item{bead}{logical. Should be TRUE when classifying beads. The bead score 
+sometimes has a larger peak for for the group that contains the beads. 
+This results in a misclassification of the beads that can make the 
+algorithm unable to find the beads. An adjustment is made to ensure this
+does not happen, but it should only be applied for bead classification.
+If the correction is used for other event types, they may be 
+misclassified.}
 }
 \value{
 A list with the following elements: \itemize{ \item{\code{label}} {A
@@ -31,6 +39,8 @@ General preliminary classification.
 \examples{
 data("raw_data", package = "CATALYST")
 sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+sce <- initialBead(sce)
+fit <- initialGuess(scores(sce, "bead"), bead = TRUE)
 sce <- initialDoublet(sce)
 fit <- initialGuess(scores(sce, "doublet"))
 

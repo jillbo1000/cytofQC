@@ -1,8 +1,9 @@
 #' Preliminary doublet classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
-#' @param score A value of 1, 2, or 3 that specifies the doublet score that 
-#' should be calculated. See details for information on the doublet score. 
+#' @param score A value of "simple", "complex", "1" that specifies the doublet 
+#' score that should be calculated. See details for information on the doublet 
+#' score. 
 #' @param standardize A value of TRUE will use compute the doublet score 
 #' using standardized data. The raw data will be used to compute the score 
 #' if FALSE. It is highly recommended that the data are standardized prior
@@ -35,11 +36,15 @@
 #' Several options are available for computing the doublet score. The
 #' following list shows the doublet score calculations. Each one can
 #' be selected by its number on the following list:
-#' \enumerate{
-#'   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width)}
-#'   \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width) + abs(Center)}
-#'   \item{0.3 * (DNA1 + DNA2 + Event_length) + Residual + Center + (max(Offset))}
+#' \itemize{
+#'   \item{simple: DNA + Residual + 0.5 * Event_length}
+#'   \item{complex: DNA + Residual + 0.5 * Event_length - 
+#'   0.5 * scale(abs(center) + abs(Width) + abs(Offset))}
+#'   \item{1: 2 * DNA + Residual + Event_length - Offset - 0.5 * Width}
 #' }
+#' Score "1" is from the original release of this package and it works well for
+#' doublet determination. The original scores "2" and "3" did not work well on
+#' further examination and are removed from this version of the package. 
 #'
 #' @examples
 #' data("raw_data", package = "CATALYST")
@@ -51,39 +56,53 @@
 #' head(initial(sce))
 #'
 #' @export
-initialDoublet <- function(x, score = c(1, 2, 3), standardize = TRUE) {
+initialDoublet <- function(x, score = c("simple", "complex", "1"), 
+                           standardize = TRUE) {
     
     if (!methods::is(x, "SingleCellExperiment")) {
         stop("x must be an object created with readCytof")
     }
     
-    score <- match.arg(as.character(score), c("1", "2", "3"))
+    score <- match.arg(as.character(score), c("simple", "complex", "1"))
 
-    if (standardize) {
-        xs <- scale(x$tech)
+    dna_channels <- grep("DNA", colnames(x$tech))
+    
+    if (length(dna_channels) > 1) {
+        DNA <- rowSums(as.matrix(x$tech[, dna_channels]), 
+                       na.rm = FALSE)
+    } else if (length(dna_channels) == 1){
+        DNA <- x$tech[, dna_channels]
     } else {
-        xs <- x$tech
+        stop("No DNA channels in data")
     }
+    
+    xs <- x$tech
+    xs$DNA <- DNA
+    
+    if (standardize) {
+        xs <- scale(xs)
+    } 
     
     unclassified.ind <- which(x$label == "cell")
     
     if (score == "1") {
-        x$scores[, "doubletScore"] <- xs[, "DNA1"] + xs[, "DNA2"] + 
-            xs[, "Residual"] + xs[, "Event_length"] - xs[, "Offset"] - 
-            0.5 * xs[, "Width"]
-    } else if (score == "2") {
-        x$scores[, "doubletScore"] <- xs[, "DNA1"] + xs[, "DNA2"] + 
-            xs[, "Residual"] + xs[, "Event_length"] - xs[, "Offset"] - 
-            0.5 * xs[, "Width"] + abs(xs[, "Center"])
-    } else if (score == "3") {
-        x$scores[, "doubletScore"] <- 0.3 * (xs[, "DNA1"] + xs[, "DNA2"] +
-                                                 xs[, "Event_length"]) + 
-            xs[, "Residual"] + xs[, "Center"] + 
-            (max(xs[, "Offset"]) - xs[, "Offset"])
-    } 
+        x$scores[, "doubletScore"] <- 2 * xs[, "DNA"] + xs[, "Residual"] + 
+            xs[, "Event_length"] - xs[, "Offset"] - 0.5 * xs[, "Width"]
+    } else if (score == "simple") {
+        x$scores[, "doubletScore"] <- xs[, "DNA"] + 2 * xs[, "Residual"] + 
+            0.5 * xs[, "Event_length"]
+    } else if (score == "complex") {
+        x$scores[, "doubletScore"] <- xs[, "DNA"] + xs[, "Residual"] + 
+            0.5 * xs[, "Event_length"] + 
+            0.5 * scale(abs(xs[, "Center"]) + abs(xs[, "Width"]) + abs(xs[, "Offset"]))
+    }
     
-    g <- initialGuess(x$scores$doubletScore[unclassified.ind], middleGroup = 1)
-    x$initial$doubletInitial[unclassified.ind] <- g$label
+    g_doublet <- initialGuess(x$scores$doubletScore[unclassified.ind], 
+                              middleGroup = 1)$label
+    g_normal <- initialGuess(x$scores$doubletScore[unclassified.ind], 
+                             middleGroup = 0)$label
+    g <- ifelse(g_doublet == 0, g_normal, g_doublet)
+    x$initial$doubletInitial[unclassified.ind] <- g
     
     x
 }

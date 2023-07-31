@@ -4,13 +4,14 @@
 \alias{initialDoublet}
 \title{Preliminary doublet classification}
 \usage{
-initialDoublet(x, score = c(1, 2, 3), standardize = TRUE)
+initialDoublet(x, score = c("simple", "complex", "1"), standardize = TRUE)
 }
 \arguments{
 \item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}}.}
 
-\item{score}{A value of 1, 2, or 3 that specifies the doublet score that 
-should be calculated. See details for information on the doublet score.}
+\item{score}{A value of "simple", "complex", "1" that specifies the doublet 
+score that should be calculated. See details for information on the doublet 
+score.}
 
 \item{standardize}{A value of TRUE will use compute the doublet score 
 using standardized data. The raw data will be used to compute the score 
@@ -48,11 +49,15 @@ the colData.
 Several options are available for computing the doublet score. The
 following list shows the doublet score calculations. Each one can
 be selected by its number on the following list:
-\enumerate{
-  \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width)}
-  \item{DNA1 + DNA2 + Residual + Event_length - Offset - 0.5(Width) + abs(Center)}
-  \item{0.3 * (DNA1 + DNA2 + Event_length) + Residual + Center + (max(Offset))}
+\itemize{
+  \item{simple: DNA + Residual + 0.5 * Event_length}
+  \item{complex: DNA + Residual + 0.5 * Event_length - 
+  0.5 * scale(abs(center) + abs(Width) + abs(Offset))}
+  \item{1: 2 * DNA + Residual + Event_length - Offset - 0.5 * Width}
 }
+Score "1" is from the original release of this package and it works well for
+doublet determination. The original scores "2" and "3" did not work well on
+further examination and are removed from this version of the package.
 }
 \examples{
 data("raw_data", package = "CATALYST")

@@ -1,8 +1,9 @@
 #' Preliminary debris classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
-#' @param score A value of 1, 2, or 3 that specifies the debris score that 
-#' should be calculated. See details for information on the debris score. 
+#' @param score A value of "simple", "complex", or "1" that specifies the debris 
+#' score that should be calculated. Note that the score "1" is from the first
+#' release of this package. See details for information on the debris score. 
 #' @param standardize A value of TRUE will compute the debris score 
 #' using standardized data. The raw data will be used to compute the score 
 #' if FALSE. It is highly recommended that the data are standardized prior
@@ -35,11 +36,15 @@
 #' Several options are available for computing the debris score. The
 #' following list shows the debris score calculations. Each one can
 #' be selected by its number on the following list:
-#' \enumerate{
-#'   \item{1 - (DNA1 + DNA2 + Event_length - Center - Width + Offset)}
-#'   \item{Residual + Offset - 2(DNA1) - 2(DNA2) - Event_length - Center - 0.5(Width)}
-#'   \item{1 - (DNA1 + DNA2 + Event_length)}
+#' \itemize{
+#'   \item{simple: -1 * (2 * DNA + Event_length)}
+#'   \item{complex: -1 * (2 * DNA + Event_length - Offset - Width)}
+#'   \item{1: 1 - (2 * DNA + Event_length - Center - Width + Offset)}
 #' }
+#' Note that there were three scores released with the original version of this
+#' package that were labeled "1", "2", and "3". Score "1" is the same score and 
+#' works fairly well. Scores "2" and "3" were found to be poor scores based
+#' on further analysis so they are not included in this version of the package.
 #'
 #' @examples
 #' data("raw_data", package = "CATALYST")
@@ -50,39 +55,54 @@
 #' head(initial(sce))
 #'
 #' @export
-initialDebris <- function(x, score = c(1, 2, 3), standardize = TRUE) {
+initialDebris <- function(x, score = c("simple", "complex", 1), standardize = TRUE) {
     
     if (!methods::is(x, "SingleCellExperiment")) {
         stop("x must be an object created with readCytof")
     }
     
-    score <- match.arg(as.character(score), c("1", "2", "3"))
+    score <- match.arg(as.character(score), c("simple", "complex", "1"))
+    
+    dna_channels <- grep("DNA", colnames(x$tech))
+    
+    if (length(dna_channels) > 1) {
+        DNA <- rowSums(as.matrix(x$tech[, dna_channels]), 
+                       na.rm = FALSE)
+    } else if (length(dna_channels) == 1){
+        DNA <- x$tech[, dna_channels]
+    } else {
+        stop("No DNA channels in data")
+    }
+    
+    xs <- x$tech
+    xs$DNA <- DNA
     
     if (standardize) {
-        xs <- scale(x$tech)
-    } else {
-        xs <- x$tech
-    }
+        xs <- scale(xs)
+    } 
     
     unclassified.ind <- which(x$label == "cell")
     
     if (score == "1") {
-        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
+        x$scores[, "debrisScore"] <- 1 - (2 * xs[, "DNA"] +  
                                               xs[, "Event_length"] - 
                                               xs[, "Center"] - 
                                               xs[, "Width"] + 
                                               xs[, "Offset"])
-    } else if (score == "2") {
-        x$scores[, "debrisScore"] <- xs[, "Residual"] + xs[, "Offset"] - 
-            2.0 * xs[, "DNA1"] - 2.0 * xs[, "DNA2"] - xs[, "Event_length"] - 
-            xs[, "Center"] - 0.5 * xs[, "Width"]
-    } else if (score == "3") {
-        x$scores[, "debrisScore"] <- 1 - (xs[, "DNA1"] + xs[, "DNA2"] + 
-                                              xs[, "Event_length"])
+    } else if (score == "simple") {
+        x$scores[, "debrisScore"] <- -1 * (2 * xs[, "DNA"] + 
+                                               xs[, "Event_length"])
+        
+    } else if (score == "complex") {
+        x$scores[, "debrisScore"] <- -1 * (2 * xs[, "DNA"] + 
+                                               xs[, "Event_length"]) -
+            scale(xs[, "Offset"] - xs[, "Width"])[, 1]
     } 
     
-    g <- initialGuess(x$scores$debrisScore[unclassified.ind], middleGroup = 1)
-    x$initial$debrisInitial[unclassified.ind] <- g$label
+    g_debris <- initialGuess(x$scores$debrisScore[unclassified.ind], middleGroup = 1)$label
+    g_normal <- initialGuess(x$scores$debrisScore[unclassified.ind], middleGroup = 0)$label
+    g <- ifelse(g_debris == 0, g_normal, g_debris)
+    x$initial$debrisInitial[unclassified.ind] <- g
     
     x
 }

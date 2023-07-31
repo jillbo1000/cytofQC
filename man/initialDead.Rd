@@ -4,17 +4,19 @@
 \alias{initialDead}
 \title{Preliminary viability classification}
 \usage{
-initialDead(x, dna = FALSE, standardize = TRUE)
+initialDead(x, standardize = FALSE)
 }
 \arguments{
 \item{x}{A \code{SingleCellExperiment} created with \code{\link{readCytof}}.}
 
-\item{dna}{If TRUE, the DNA will be used to determine viability.}
-
-\item{standardize}{A value of TRUE will use compute the doublet score 
+\item{standardize}{A value of TRUE will use compute the ddebris score 
 using standardized data. The raw data will be used to compute the score 
-if FALSE. It is highly recommended that the data are standardized prior
-to computing the score because the variables are on different scales.}
+if FALSE. Be careful in using this setting. If channels are denoted as 
+viability channels when the data are imported, they will be given equal 
+weight if the data are standardized. It is common to have a channel labeled 
+as a viability channel and have it not be used as one. This will make it 
+virtually impossible to classify the dead cells. This is why this score 
+defaults to FALSE.}
 }
 \value{
 A \code{SingleCellExperiment} that contains the permeability score 
@@ -55,11 +57,9 @@ colData and the initial classification is recorded in the \code{initial}
 part of the colData. 
 
 The viability measures should classify into two fairly clear groups
-where one is permeable cells and the other is non-permeability. DNA is
-also often higher for cells that are permeable. The primary measure
-for determining permeability is sum of the viability measures, but 
-the method allows for DNA content to be used as well.
-The function \code{initialGuess} is used to determine the groups. The 
+where one is permeable cells and the other is non-permeability. The primary 
+measure for determining permeability is sum of the viability measures. The 
+function \code{initialGuess} is used to determine the groups. The 
 members of the group with the largest mean are classified as 'dead' 
 and the rest are classified as not dead.
 }

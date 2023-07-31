@@ -45,9 +45,16 @@
         trace <- c(trace, sum(abs(Z-Z.old)))
         Z.old <- Z
         p1 <- mean(Z)
+        
+        s1.old <- s1
+        s2.old <- s2
+        
         m2 <- weighted.mean(x, w = 1-Z) 
         s1 <- sqrt(sum(Z*(x^2)) / (sum(Z)-1))
         s2 <- weightedSd(x, 1-Z)
+        
+        if(is.na(s1) | s1 == 0) s1 <- s1.old
+        if(is.na(s2) | s2 == 0) s2 <- s2.old
     }
     pleft <- dnorm(x, mean = 0, sd = s1) * p1 * 2
     pright <- dnorm(x, mean = m2, sd = s2) * (1-p1)
@@ -106,12 +113,22 @@
         
         p <- unname(colMeans(Z))
         
+        s1.old <- s1
+        s2.old <- s2
+        s3.old <- s3
+        # m2.old <- m2
+        # m3.old <- m3
+        
         m2 <- weighted.mean(x, w = Z[,2])
         m3 <- weighted.mean(x, w = Z[,3])
         
-        s1 <- sqrt(sum(Z[,1]*(x^2)) / (sum(Z[,1])-1))
-        s2 <- weightedSd(x, Z[,2])
-        s3 <- weightedSd(x, Z[,3])
+        suppressWarnings(s1 <- sqrt(sum(Z[,1]*(x^2)) / (sum(Z[,1])-1)))
+        suppressWarnings(s2 <- weightedSd(x, Z[,2]))
+        suppressWarnings(s3 <- weightedSd(x, Z[,3], na.rm = TRUE))
+        
+        if(is.na(s1) | s1 == 0) s1 <- s1.old
+        if(is.na(s2) | s2 == 0) s2 <- s2.old
+        if(is.na(s3) | s3 == 0) s3 <- s3.old
     }
     # ensure group 3 is highest
     if(m2 > m3){
@@ -150,6 +167,13 @@
 #'   middle group. Possible values are \code{-1} for "cell", \code{0} (default)
 #'   for "indeterminate", and \code{1} for the event type of interest (eg.
 #'   "doublet").
+#' @param bead logical. Should be TRUE when classifying beads. The bead score 
+#'   sometimes has a larger peak for for the group that contains the beads. 
+#'   This results in a misclassification of the beads that can make the 
+#'   algorithm unable to find the beads. An adjustment is made to ensure this
+#'   does not happen, but it should only be applied for bead classification.
+#'   If the correction is used for other event types, they may be 
+#'   misclassified.  
 #' 
 #' @return A list with the following elements: \itemize{ \item{\code{label}} {A
 #'   vector of the same length as \code{x} providing the labels (\code{-1} for
@@ -162,11 +186,13 @@
 #' @examples
 #' data("raw_data", package = "CATALYST")
 #' sce <- readCytof(raw_data, beads = "Beads", viability = c("cisPt1", "cisPt2"))
+#' sce <- initialBead(sce)
+#' fit <- initialGuess(scores(sce, "bead"), bead = TRUE)
 #' sce <- initialDoublet(sce)
 #' fit <- initialGuess(scores(sce, "doublet"))
 #' 
 #' @export
-initialGuess <- function(x, middleGroup = c(0, -1, 1)){
+initialGuess <- function(x, middleGroup = c(0, -1, 1), bead = FALSE){
     
     if (!methods::is(x, "numeric")) {
         stop("x must be a numeric vector")
@@ -175,8 +201,14 @@ initialGuess <- function(x, middleGroup = c(0, -1, 1)){
     middleGroup <- as.numeric(match.arg(as.character(middleGroup), 
                                         c("0", "-1", "1")))
 
-    d <- density(x[which(x > min(x))]) 
-    cut <- d$x[which.max(d$y)]
+    if (bead) {
+        mm <- mixtools::normalmixEM(x[x > min(x, na.rm = TRUE)])
+        cut <- min(mm$mu)
+    } else {
+        d <- density(x[which(x > min(x))]) 
+        cut <- d$x[which.max(d$y)]
+    }
+
     xx <- x[x >= cut]
     xx <- xx - cut
     

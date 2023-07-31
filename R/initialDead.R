@@ -1,11 +1,14 @@
 #' Preliminary viability classification
 #'
 #' @param x A \code{SingleCellExperiment} created with \code{\link{readCytof}}. 
-#' @param dna If TRUE, the DNA will be used to determine viability.
-#' @param standardize A value of TRUE will use compute the doublet score 
+#' @param standardize A value of TRUE will use compute the ddebris score 
 #' using standardized data. The raw data will be used to compute the score 
-#' if FALSE. It is highly recommended that the data are standardized prior
-#' to computing the score because the variables are on different scales.
+#' if FALSE. Be careful in using this setting. If channels are denoted as 
+#' viability channels when the data are imported, they will be given equal 
+#' weight if the data are standardized. It is common to have a channel labeled 
+#' as a viability channel and have it not be used as one. This will make it 
+#' virtually impossible to classify the dead cells. This is why this score 
+#' defaults to FALSE.
 #'
 #' @return A \code{SingleCellExperiment} that contains the permeability score 
 #' and the permeability designation for each event. This information is stored 
@@ -42,11 +45,9 @@
 #' part of the colData. 
 #' 
 #' The viability measures should classify into two fairly clear groups
-#' where one is permeable cells and the other is non-permeability. DNA is
-#' also often higher for cells that are permeable. The primary measure
-#' for determining permeability is sum of the viability measures, but 
-#' the method allows for DNA content to be used as well.
-#' The function \code{initialGuess} is used to determine the groups. The 
+#' where one is permeable cells and the other is non-permeability. The primary 
+#' measure for determining permeability is sum of the viability measures. The 
+#' function \code{initialGuess} is used to determine the groups. The 
 #' members of the group with the largest mean are classified as 'dead' 
 #' and the rest are classified as not dead. 
 #'
@@ -61,40 +62,34 @@
 #' head(initial(sce))
 #'
 #' @export
-initialDead <- function(x, dna = FALSE, standardize = TRUE) {
+initialDead <- function(x, standardize = FALSE) {
     
     if (!methods::is(x, "SingleCellExperiment")) {
         stop("x must be an object created with readCytof")
     }
     
+    xs <- as.matrix(x$tech)
+    
     if (standardize) {
-        xs <- scale(x$tech)
-    } else {
-        xs <- x$tech
+        xs <- scale(xs)
     }
     
-    unclassified.ind <- which(x$label == "cell")
+    viability <- xs[, grep("Viability", colnames(xs))]
     
-    viability <- xs[, grep("Viability", colnames(x$tech))]
+    unclassified.ind <- which(x$label == "cell")
     
     if (ncol(data.frame(viability)) > 1) {
         viability <- rowSums(viability, na.rm = TRUE)
     } 
     
-    if (dna) {
-        dnaData <- xs[, grep("DNA", colnames(x$tech))]
-        if (ncol(dnaData) > 1) {
-            n <- ncol(dnaData)
-            dnaData <- rowSums(dnaData, na.rm = TRUE)
-            dnaData <- dnaData / n
-        }
-        x$scores$deadScore <- viability + dnaData
-    } else {
-        x$scores$deadScore <- viability
-    }
+    x$scores$deadScore <- viability
     
-    g <- initialGuess(x$scores$deadScore[unclassified.ind], middleGroup = 1)
-    x$initial[unclassified.ind, "deadInitial"] <- g$label
+    g_dead <- initialGuess(x$scores$deadScore[unclassified.ind], 
+                           middleGroup = 1, bead = FALSE)$label
+    g_normal <- initialGuess(x$scores$deadScore[unclassified.ind], 
+                             middleGroup = 0, bead = FALSE)$label
+    g <- ifelse(g_dead == 0, g_normal, g_dead)
+    x$initial[unclassified.ind, "deadInitial"] <- g
     
     x
 }
