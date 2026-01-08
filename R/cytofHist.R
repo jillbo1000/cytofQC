@@ -60,7 +60,6 @@ cytofHist <- function(x, group, type = c("count", "density"), na.rm = FALSE,
     }
     
     g <- g + ggplot2::scale_fill_manual(values = cols) +
-        hrbrthemes::theme_ipsum() +
         ggplot2::labs(fill = "") +
         ggplot2::theme_bw()
     
