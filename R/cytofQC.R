@@ -4,9 +4,9 @@
 #' one Gaussian parameter), bead, debris, doublet, or dead cell.  
 #' 
 #'  
-#' Data from an fcs file are read directly into a 
-#' \code{\link{SingleCellExperiment}} using the \code{\link{readCytof}} 
-#' function. 
+#' Data from an fcs file are read directly into a
+#' \code{\link[SingleCellExperiment]{SingleCellExperiment}} using the
+#' \code{\link{readCytof}} function.
 #' 
 #' The data can be labeled with a single function, \code{\link{labelQC}}, which
 #' can be customized. Labeling can also be done using a set of other functions
@@ -27,10 +27,9 @@
 #' 
 #' @name cytofQC-package
 #' @aliases cytofQC cytofQC-package
-#' @docType package
 #' @author 
 #' Maintainer: Jill Lundell <jflundell@gmail.com>
 #' 
 #' Authors: J. Lundell, K. Street
 #' 
-NULL
+"_PACKAGE"

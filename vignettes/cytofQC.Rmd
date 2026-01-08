@@ -176,7 +176,10 @@ x <- svmLabel(x, type = "dead", n = 500)
 
 # UMAP for exploration
 
-The following is a UMAP that was created using only the `tech` data and colored with the labels from `cytofQC`. Note that the labels from `cytofQC` match the clusters in the UMAP and that neither they nor the scores were used to generate the UMAP.  
+The following is a UMAP that was created using only the `tech` data and colored
+with the labels from `cytofQC`. Note that the labels from `cytofQC` match the
+clusters in the UMAP and that neither they nor the scores were used to generate
+the UMAP.
 
 ```{r umap}
 library(uwot)

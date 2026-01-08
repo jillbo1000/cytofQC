@@ -10,9 +10,9 @@ Labels observations in a CyTOF dataset as a cell, gdpZero (zero for at least
 one Gaussian parameter), bead, debris, doublet, or dead cell.
 }
 \details{
-Data from an fcs file are read directly into a 
-\code{\link{SingleCellExperiment}} using the \code{\link{readCytof}} 
-function. 
+Data from an fcs file are read directly into a
+\code{\link[SingleCellExperiment]{SingleCellExperiment}} using the
+\code{\link{readCytof}} function.
 
 The data can be labeled with a single function, \code{\link{labelQC}}, which
 can be customized. Labeling can also be done using a set of other functions
@@ -30,6 +30,14 @@ the QC variables and colored by event label.
 
 \tabular{ll}{ Package: \tab cytofQC \cr Type: \tab Package \cr Version:
 \tab 0.99.3 \cr Date: \tab 2022-11-11 \cr License: \tab Artistic-2.0\cr }
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/jillbo1000/cytofQC}
+  \item Report bugs at \url{https://github.com/jillbo1000/cytofQC/issues}
+}
+
 }
 \author{
 Maintainer: Jill Lundell <jflundell@gmail.com>
